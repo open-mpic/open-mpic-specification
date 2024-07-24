@@ -21,7 +21,7 @@ servers:
 paths:
   /validation:
     post:
-      summary: Perform domain control validation and/or CAA record checks
+      summary: Perform domain control validation.
       requestBody:
         description: Parameters for domain validation
         content:
@@ -79,7 +79,7 @@ paths:
           description: Internal Server Error
   /caa-check:
     post:
-      summary: Check CAA records for a domain.
+      summary: Check CAA records.
       requestBody:
         description: Parameters for the CAA check.
         content:
@@ -132,7 +132,7 @@ paths:
           description: Internal Server Error
   /validation-with-caa-check:
     post:
-      summary: Perform validation and check CAA records for a domain.
+      summary: Perform domain control validation and check CAA records.
       requestBody:
         description: Parameters for the validation CAA check.
         content:
