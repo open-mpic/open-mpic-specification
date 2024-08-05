@@ -146,7 +146,7 @@ paths:
                 perspective-count: 2
                 quorum-count: 1
               validation-method: http-generic
-              validaiton-details:
+              validation-details:
                 path: "/.well-known/acme-challenge/token"
                 expected-value: challenge_token
               caa-details:
@@ -170,7 +170,7 @@ paths:
                 is-valid-validation: true
                 is-valid-caa: true
                 validation-method: http-generic
-                validaiton-details:
+                validation-details:
                   path: "/.well-known/acme-challenge/token"
                   expected-value: challenge_token
                 perspectives-validation:
