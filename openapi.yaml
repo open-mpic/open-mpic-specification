@@ -37,7 +37,7 @@ paths:
               validation-method: http-generic
               validation-details:
                   path: "/.well-known/acme-challenge/token"
-                  expected-value: challenge_token
+                  expected-challenge: challenge_token
         required: true
       responses:
         '200':
@@ -56,7 +56,7 @@ paths:
                 validation-method: http-generic
                 validation-details:
                   path: "/.well-known/acme-challenge/token"
-                  expected-value: challenge_token
+                  expected-challenge: challenge_token
                 perspectives:
                 - perspective: arin.us-east-2
                   is-valid: true
@@ -148,7 +148,7 @@ paths:
               validation-method: http-generic
               validation-details:
                 path: "/.well-known/acme-challenge/token"
-                expected-value: challenge_token
+                expected-challenge: challenge_token
               caa-details:
                 caa-domains:
                 - letsencrypt.org
@@ -172,7 +172,7 @@ paths:
                 validation-method: http-generic
                 validation-details:
                   path: "/.well-known/acme-challenge/token"
-                  expected-value: challenge_token
+                  expected-challenge: challenge_token
                 perspectives-validation:
                 - perspective: arin.us-east-2
                   is-valid: true
@@ -220,7 +220,7 @@ components:
       type: object
       required: 
       - path
-      - expected-value
+      - expected-challenge
       properties:
         path:
           type: string
@@ -241,7 +241,7 @@ components:
         prefix:
           type: string
           example: '_acme-challenge'
-          description: "The domain label prefix where to look for the expected-value. If label is not an empty string, the FQDN which will be queried for the expected-value is constructed via the syntax label + \".\" + identifier + \".\". If label is an empty string the query is sent directly to identifier + \".\". identifier MUST be a domain to use this method."
+          description: "The domain label prefix where to look for the expected-challenge. If label is not an empty string, the FQDN which will be queried for the expected-challenge is constructed via the syntax label + \".\" + identifier + \".\". If label is an empty string the query is sent directly to identifier + \".\". identifier MUST be a domain to use this method."
         record-type:
           type: string
           example: 'TXT'
@@ -249,12 +249,12 @@ components:
         expected-challenge:
           type: string
           example: 'challenge_token'
-          description: "The expected value to be observed as a response to this DNS challenge. The challenge will be completed successfully if the expected-value is observed byte-for-byte identical in one of the RDATA fields associated with this DNS record type at the FQDN."
+          description: "The expected value to be observed as a response to this DNS challenge. The challenge will be completed successfully if the expected-challenge is observed byte-for-byte identical in one of the RDATA fields associated with this DNS record type at the FQDN."
     
     TLSALPNValidation:
       type: object
       required:
-      - expected-value
+      - expected-challenge
       properties:
         expected-challenge:
           type: string
