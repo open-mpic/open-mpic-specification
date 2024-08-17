@@ -9,7 +9,7 @@ info:
   license:
     name: TBD
     url: TBD
-  version: 1.0.0
+  version: 1.0.1
 
 externalDocs:
   description: Find out more about the project at
@@ -29,7 +29,7 @@ paths:
             schema:
               $ref: '#/components/schemas/ValidationParams'
             example:
-              api-version: 1.0.0
+              api-version: 1.0.1
               system-params:
                 identifier: example.com
                 perspective-count: 6
@@ -47,12 +47,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidationResponse'
               example:
-                api-version: 1.0.0
+                api-version: 1.0.1
                 is-valid: true
                 system-params:
                   identifier: example.com
                   perspective-count: 2
                   quorum-count: 1
+                number-of-perspectives-used: 2
+                required-quorum-count-used: 1
                 validation-method: http-generic
                 validation-details:
                   path: "/.well-known/acme-challenge/token"
@@ -87,7 +89,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CAAParams'
             example:
-              api-version: 1.0.0
+              api-version: 1.0.1
               system-params:
                 identifier: example.com
                 perspective-count: 6
@@ -104,12 +106,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/CAAResponse'
               example:
-                api-version: 1.0.0
+                api-version: 1.0.1
                 is-valid: true
                 system-params:
                   identifier: example.com
                   perspective-count: 2
                   quorum-count: 1
+                number-of-perspectives-used: 2
+                required-quorum-count-used: 1
                 perspectives:
                 - perspective: arin.us-east-2
                   is-valid: true
@@ -140,7 +144,7 @@ paths:
             schema:
               $ref: '#/components/schemas/ValidationWithCAAParams'
             example:
-              api-version: 1.0.0
+              api-version: 1.0.1
               system-params:
                 identifier: example.com
                 perspective-count: 2
@@ -161,7 +165,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidationWithCAAResponse'
               example:
-                api-version: 1.0.0
+                api-version: 1.0.1
                 system-params:
                   identifier: example.com
                   perspective-count: 2
@@ -173,6 +177,8 @@ paths:
                 validation-details:
                   path: "/.well-known/acme-challenge/token"
                   expected-challenge: challenge_token
+                number-of-perspectives-used: 2
+                required-quorum-count-used: 1
                 perspectives-validation:
                 - perspective: arin.us-east-2
                   is-valid: true
@@ -208,7 +214,7 @@ components:
     ApiVersion:
       type: string
       pattern: '^\d*.\d*.\d*$'
-      example: '1.0.0'
+      example: '1.0.1'
       description: "The API Version used generating request. It is formatted major-version.minor-version.revision . The server and the client must match the major version (i.e., a server expecting an API call with version \"1.*.*\" cannot except accept any API Version string not starting with \"1.\"). A server may accept a request with a minor version less than the server was configured to support, but must abort if the minor version is greater than the server's maximum understand minor version. Clients are encouraged to send the lowest API minor version that supports the features they need. Discrepancies in revision numbers between clients and servers do not result in a server aborting execution."
   
     ValidationMethod:
@@ -406,6 +412,8 @@ components:
         - perspectives
         - system-params
         - validation-method
+        - number-of-perspectives-used
+        - required-quorum-count-used
       properties:
         api-version:
           $ref: '#/components/schemas/ApiVersion'
@@ -425,6 +433,15 @@ components:
           description: "Matches the methods object sent in the validation-request."
         perspectives:
           $ref: '#/components/schemas/PerspectiveResponsesValidation'
+        number-of-perspectives-used:
+          type: integer
+          description: "Indicates the number of perspectives used by the server when executing the query."
+        required-quorum-count-used:
+          type: integer
+          description: "Indicates the number of perspectives that needed to succeed for is-valid to be true."
+          
+          
+          
     CAAParams:
       type: object
       required:  # List the required properties here
@@ -457,6 +474,8 @@ components:
         - system-params
         - api-version
         - perspectives
+        - number-of-perspectives-used
+        - required-quorum-count-used
       properties:
         api-version:
           $ref: '#/components/schemas/ApiVersion'
@@ -468,7 +487,12 @@ components:
           $ref: '#/components/schemas/SystemParams'
         perspectives:
           $ref: '#/components/schemas/PerspectiveResponsesCAA'
-
+        number-of-perspectives-used:
+          type: integer
+          description: "Indicates the number of perspectives used by the server when executing the query."
+        required-quorum-count-used:
+          type: integer
+          description: "Indicates the number of perspectives that needed to succeed for is-valid to be true."
           
           
     ValidationWithCAAParams:
@@ -511,6 +535,8 @@ components:
         - perspectives-caa
         - perspectives-validation
         - validation-method
+        - number-of-perspectives-used
+        - required-quorum-count-used
       properties:
         api-version:
           $ref: '#/components/schemas/ApiVersion'
@@ -542,6 +568,12 @@ components:
           - $ref: '#/components/schemas/HTTPValidation'
           - $ref: '#/components/schemas/DNSValidation'
           - $ref: '#/components/schemas/TLSALPNValidation'
+        number-of-perspectives-used:
+          type: integer
+          description: "Indicates the number of perspectives used by the server when executing the query."
+        required-quorum-count-used:
+          type: integer
+          description: "Indicates the number of perspectives that needed to succeed for is-valid to be true."
 
 
   securitySchemes:
