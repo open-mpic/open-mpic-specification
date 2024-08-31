@@ -9,14 +9,14 @@ info:
   license:
     name: TBD
     url: TBD
-  version: 1.0.2
+  version: 2.0.0
 
 externalDocs:
   description: Find out more about the project at
-  url: https://tbd
+  url: https://open-mpic.org/
 
 servers:
-  - url: https://your-api.example.com/api/v1
+  - url: https://your-api.example.com/mpic
 
 paths:
   /validation:
@@ -211,28 +211,55 @@ paths:
 
 components:
   schemas:
-    ApiVersion:
+    
+    DomainOrIPTarget:
       type: string
-      pattern: '^\d*.\d*.\d*$'
-      example: '1.0.2'
-      description: "The API Version used generating request. It is formatted major-version.minor-version.revision . The server and the client must match the major version (i.e., a server expecting an API call with version \"1.*.*\" cannot except accept any API Version string not starting with \"1.\"). A server may accept a request with a minor version less than the server was configured to support, but must abort if the minor version is greater than the server's maximum understand minor version. Clients are encouraged to send the lowest API minor version that supports the features they need. Discrepancies in revision numbers between clients and servers do not result in a server aborting execution."
-  
+      example: "example.com"
+      description: "The FQDN (no trailing .) or public IP for which control is being validated."
+    
+    DcvCheckParameters:
+      type: object
+      properties:
+        validation_method:
+          $ref: '#/components/schemas/ValidationMethod'
+        validation_details:
+          description: "The validation method(s) to be performed at the various network perspectives."
+          oneOf:
+            - $ref: '#/components/schemas/HTTPValidation'
+            - $ref: '#/components/schemas/DNSValidation'
+    CaaCheckParameters:
+      type: object
+      properties:
+        certificate_type:
+          type: string
+          enum: ['tls-server', 'tls-server:wildcard', 's-mime'] # doc: https://swagger.io/docs/specification/data-models/enums/
+          description: "Specifies the type of certificate the CA will be signing for theapplicant as it pertains to parsing CAA records."
+        caa_domains:
+          type: array
+          example:
+            - "letsencrypt.org"
+          description: "Valid CAA domain names in issue or issuewild (e.g., CAA 0 issue     \"letsencrypt.org\")tags that permit issuance by the calling CA. If left empty, the     default configured CAA domain name(s) are used."
+          items:
+            type: string
+        
+          
+            
     ValidationMethod:
       description:  "The type of domain control validation the netwrok perspectives should use."
       type: string
       enum: ['http-generic', 'dns-generic', 'tls-using-alpn'] # doc: https://swagger.io/docs/specification/data-models/enums/
-  
+    
     HTTPValidation:
       type: object
       required: 
-      - path
+      - http_token_path
       - expected-challenge
       properties:
-        path:
+        http_token_path:
           type: string
           example: '/.well-known/acme-challenge/token'
           description: "The path to check for the challenge token. The full URL used to retrieve the expected value is constructed via the syntax \"http://\" + identifier + path."
-        expected-challenge:
+        challenge_value:
           type: string
           example: 'challenge_token'
           description: "The expected value to be observed at this URL. The value will be checked by stripping leading or trailing whitespace from both the response and the expected value and then performing an equality check on the two strings."
@@ -240,60 +267,47 @@ components:
     DNSValidation:
       type: object
       required:
-        - prefix
-        - record-type
-        - expected-challenge
+        - dns_name_prefix
+        - dns_record_type
+        - challenge_value
       properties:
-        prefix:
+        dns_name_prefix:
           type: string
           example: '_acme-challenge'
           description: "The domain label prefix where to look for the expected-challenge. If label is not an empty string, the FQDN which will be queried for the expected-challenge is constructed via the syntax label + \".\" + identifier + \".\". If label is an empty string the query is sent directly to identifier + \".\". identifier MUST be a domain to use this method."
-        record-type:
+        dns_record_type:
           type: string
           example: 'TXT'
           description: "The DNS record type to be queried."
-        expected-challenge:
+        challenge_value:
           type: string
           example: 'challenge_token'
           description: "The expected value to be observed as a response to this DNS challenge. The challenge will be completed successfully if the expected-challenge is observed byte-for-byte identical in one of the RDATA fields associated with this DNS record type at the FQDN."
-    
-    TLSALPNValidation:
+          
+    # TLS-ALPN is getting nixed from the standard until there is implementation to accompany it.
+    #TLSALPNValidation:
+    #  type: object
+    #  required:
+    #  - expected-challenge
+    #  properties:
+    #    expected-challenge:
+    #      type: string
+    #      example: 'challenge_token'
+    #      description: "The expected value to be observed inside the acmeIdentifier extension of #the self-signed certificate presented during the TLS handshake. The value will be #checked by stripping leading or trailing whitespace from both the extension value and #the expected value and then performing an equality check on the two strings."
+    OrchestrationParameters:
       type: object
-      required:
-      - expected-challenge
       properties:
-        expected-challenge:
-          type: string
-          example: 'challenge_token'
-          description: "The expected value to be observed inside the acmeIdentifier extension of the self-signed certificate presented during the TLS handshake. The value will be checked by stripping leading or trailing whitespace from both the extension value and the expected value and then performing an equality check on the two strings."
-
-    SystemParams:
-      type: object
-      required:  # List the required properties here
-        - identifier
-      properties:
-        identifier:
-          type: string
-          example: "example.com"
-          description: "The FQDN (no trailing .) or public IP for which control is being validated."
-        perspective-count:
+        perspective_count:
           type: integer
           example: 6
           description: "The number of vantage points to use for this request. Allows the implementing API endpoint flexibility in picking vantage points so long as vantage points are picked from at least two different Regional Internet Registry service regions if possible. Vantage point selection by the implementing server MUST be deterministic for a particular \"domain\" value such that requests with the same domain value to the same API endpoint always result in the same vantage point usage (presuming the API endpoint was not reconfigured between requests). Implementations SHOULD also make vantage point selection non-predictable (e.g., using a secret keyed cryptographic hash) so that an outside entity without access to the internal configuration of the API endpoint cannot predict wich vantage points will be used for a specified domain. This property CANNOT be specified with the \"perspectives\" array that forces use of a particular set of perspectives."
-        perspectives:
-          example:
-            - "arin.us-east-2"
-            - "ripe.eu-central-1"
-            - "apnic.ap-southeast-1"
-          type: array
-          description: "An array of network-perspective identifiers of the format \"rir-name.location\" where \"rir-name\" is the name of the Regional Internet Registry that contains that network perspective within their service region. \"location\" is an arbitrary identifier uniquely referring to a particular network perspective within a Regional Internet Registry service region. This option CANNOT be specified with \"perspective-count\"."
           items:
             type: string
-        quorum-count:
+        quorum_count:
           type: integer
           example: 5
           description: "The number of network perspectives that must successfully complete the the validation methods specified. As long as this value is greater than 2, the API will enforce that successful network perspectives must be spread across two Regional Internet Registry service regions (so long as there is a perspective used in at least two different Regional Internet Registry service regions). A quorum count of 0 instructs the API to operate in a monitoring only mode and always return success = true even if no vantage points succeed. In general 0 <= quorum count <= perspectives-count."
-        max-attempts:
+        max_attempts:
           type: integer
           example: 3
           description: "The maximum number of times validation or CAA checks should be retried as the result of a single API POST request. An implementation may choose to retry with the same or different perspectives each time. It is recommended implementations cap the number of distinct sets of perspectives that will ever validate a particular identifier to avoid adversaries retrying many times in the interest of getting favorable perspective sets."
@@ -391,22 +405,15 @@ components:
     ValidationParams:
       type: object
       required:
-        - api-version
-        - system-params
-        - validation-method
+        - domain_or_ip_target
+        - dcv_check_parameters
       properties:
-        api-version:
-          $ref: '#/components/schemas/ApiVersion'
-        system-params:
-          $ref: '#/components/schemas/SystemParams'
-        validation-method:
-          $ref: '#/components/schemas/ValidationMethod'
-        validation-details:
-          description: "The validation method(s) to be performed at the various network perspectives."
-          oneOf:
-            - $ref: '#/components/schemas/HTTPValidation'
-            - $ref: '#/components/schemas/DNSValidation'
-            - $ref: '#/components/schemas/TLSALPNValidation'
+        domain_or_ip_target:
+          $ref: '#/components/schemas/DomainOrIPTarget'
+        orchestration_parameters:
+          $ref: '#/components/schemas/OrchestrationParameters'
+        dcv_check_parameters:
+          $ref: '#/components/schemas/DcvCheckParameters'
           
     ValidationResponse:
       type: object
@@ -419,21 +426,17 @@ components:
         - number-of-perspectives-used
         - required-quorum-count-used
       properties:
-        api-version:
-          $ref: '#/components/schemas/ApiVersion'
         is-valid:
           type: boolean
           example: True
           description: "Returns whether the validation attempt was successful (i.e., the specified quorum was reached for the requested methods)."
-        system-params:
-          $ref: '#/components/schemas/SystemParams'
+
         validation-method:
           $ref: '#/components/schemas/ValidationMethod'
         validation-details:
           oneOf:
           - $ref: '#/components/schemas/HTTPValidation'
           - $ref: '#/components/schemas/DNSValidation'
-          - $ref: '#/components/schemas/TLSALPNValidation'
           description: "Matches the methods object sent in the validation-request."
         perspectives:
           $ref: '#/components/schemas/PerspectiveResponsesValidation'
@@ -449,28 +452,14 @@ components:
     CAAParams:
       type: object
       required:  # List the required properties here
-        - api-version
-        - system-params
+        - domain_or_ip_target
       properties:
-        
-        api-version:
-          $ref: '#/components/schemas/ApiVersion'
-        system-params:
-          $ref: '#/components/schemas/SystemParams'
-        caa-details:
-          type: object
-          properties:
-            certificate-type:
-              type: string
-              enum: ['tls-server', 'tls-server:wildcard', 's-mime'] # doc: https://swagger.io/docs/specification/data-models/enums/
-              description: "Specifies the type of certificate the CA will be signing for the applicant as it pertains to parsing CAA records."
-            caa-domains:
-              type: array
-              example:
-                - "letsencrypt.org"
-              description: "Valid CAA domain names in issue or issuewild (e.g., CAA 0 issue     \"letsencrypt.org\")tags that permit issuance by the calling CA. If left empty, the     default configured CAA domain name(s) are used."
-              items:
-                type: string
+        domain_or_ip_target: 
+          $ref: '#/components/schemas/DomainOrIPTarget'
+        orchestration_parameters:
+          $ref: '#/components/schemas/OrchestrationParameters'
+        caa_check_parameters:
+          $ref: '#/components/schemas/CaaCheckParameters'
     CAAResponse:
       type: object
       required:
@@ -481,14 +470,10 @@ components:
         - number-of-perspectives-used
         - required-quorum-count-used
       properties:
-        api-version:
-          $ref: '#/components/schemas/ApiVersion'
         is-valid:
           type: boolean
           example: True
           description: "Returns whether the validation attempt was successful (i.e., the specified quorum was reached for the requested methods and CAA record checks). This is the logical AND of is-valid-caa and is-valid-validation if they are both present in the response."
-        system-params:
-          $ref: '#/components/schemas/SystemParams'
         perspectives:
           $ref: '#/components/schemas/PerspectiveResponsesCAA'
         number-of-perspectives-used:
@@ -502,32 +487,17 @@ components:
     ValidationWithCAAParams:
       type: object
       required:
-        - api-version
-        - system-params
-        - methods
+        - domain_or_ip_target
+        - dcv_check_parameters
       properties:
-        api-version:
-          $ref: '#/components/schemas/ApiVersion'
-        system-params:
-          $ref: '#/components/schemas/SystemParams'
-        validation-method:
-          $ref: '#/components/schemas/ValidationMethod'
-        validation-details:
-          anyOf:
-            - $ref: '#/components/schemas/HTTPValidation'
-            - $ref: '#/components/schemas/DNSValidation'
-            - $ref: '#/components/schemas/TLSALPNValidation'
-          description: "The validation method(s) to be performed at the various network perspectives."
-        caa-details:
-          type: object
-          properties:
-            caa-domains:
-              type: array
-              example:
-                - "letsencrypt.org"
-              description: "Valid CAA domain names in issue or issuewild (e.g., CAA 0 issue     \"letsencrypt.org\")tags that permit issuance by the calling CA. If left empty, the     default configured CAA domain name(s) are used."
-              items:
-                type: string
+        domain_or_ip_target:
+          $ref: '#/components/schemas/DomainOrIPTarget'
+        orchestration_parameters:
+          $ref: '#/components/schemas/OrchestrationParameters'
+        dcv_check_parameters:
+          $ref: '#/components/schemas/DcvCheckParameters'
+        caa_check_parameters:
+          $ref: '#/components/schemas/CaaCheckParameters'
     ValidationWithCAAResponse:
       type: object
       required:
@@ -542,10 +512,6 @@ components:
         - number-of-perspectives-used
         - required-quorum-count-used
       properties:
-        api-version:
-          $ref: '#/components/schemas/ApiVersion'
-        system-params:
-          $ref: '#/components/schemas/SystemParams'
         is-valid:
           type: boolean
           description: "A boolean indicating if with both the CAA request and validation request was successful."
@@ -571,7 +537,6 @@ components:
           oneOf:
           - $ref: '#/components/schemas/HTTPValidation'
           - $ref: '#/components/schemas/DNSValidation'
-          - $ref: '#/components/schemas/TLSALPNValidation'
         number-of-perspectives-used:
           type: integer
           description: "Indicates the number of perspectives used by the server when executing the query."
