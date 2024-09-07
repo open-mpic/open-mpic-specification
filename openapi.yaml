@@ -19,17 +19,19 @@ servers:
   - url: https://your-api.example.com/mpic
 
 paths:
-  /validation:
+  /mpic:
     post:
-      summary: Perform domain control validation.
+      summary: Perform MPIC.
       requestBody:
-        description: Parameters for domain validation
+        description: Parameters for MPIC
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ValidationParams'
+              oneOf:
+              - $ref: '#/components/schemas/ValidationParams'
+              - $ref: '#/components/schemas/CAAParams'
+              - $ref: '#/components/schemas/ValidationWithCAAParams'
             example:
-              api-version: 1.0.2
               system-params:
                 identifier: example.com
                 perspective-count: 6
@@ -45,7 +47,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationResponse'
+                oneOf:
+                - $ref: '#/components/schemas/ValidationResponse'
+                - $ref: '#/components/schemas/CAAResponse'
+                - $ref: '#/components/schemas/ValidationWithCAAResponse'
               example:
                 api-version: 1.0.2
                 is-valid: true
@@ -79,139 +84,12 @@ paths:
           description: Unauthorized
         '500':
           description: Internal Server Error
-  /caa-check:
-    post:
-      summary: Check CAA records.
-      requestBody:
-        description: Parameters for the CAA check.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CAAParams'
-            example:
-              api-version: 1.0.2
-              system-params:
-                identifier: example.com
-                perspective-count: 6
-                quorum-count: 5
-              caa-details:
-                caa-domains:
-                  - letsencrypt.org
-        required: true
-      responses:
-        '200':
-          description: Successfully processed request. Validation may-or-may-not be successful.   Check response body.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CAAResponse'
-              example:
-                api-version: 1.0.2
-                is-valid: true
-                system-params:
-                  identifier: example.com
-                  perspective-count: 2
-                  quorum-count: 1
-                number-of-perspectives-used: 2
-                required-quorum-count-used: 1
-                perspectives:
-                - perspective: arin.us-east-2
-                  is-valid: true
-                  details:
-                    caa:
-                      nameserver-ip: 1.2.3.4
-                - perspective: arin.us-west-2
-                  is-valid: false
-                  details:
-                    caa:
-                      nameserver-ip: 2.3.4.5
-                  errors:
-                  - error-type: caa:timeout
-                    error-message: Experienced a timeout when attempting to query example.com in CAA.
-        '400':
-          description: Bad Request
-        '403':
-          description: Unauthorized
-        '500':
-          description: Internal Server Error
-  /validation-with-caa-check:
-    post:
-      summary: Perform domain control validation and check CAA records.
-      requestBody:
-        description: Parameters for the validation CAA check.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ValidationWithCAAParams'
-            example:
-              api-version: 1.0.2
-              system-params:
-                identifier: example.com
-                perspective-count: 2
-                quorum-count: 1
-              validation-method: http-generic
-              validation-details:
-                path: "/.well-known/acme-challenge/token"
-                expected-challenge: challenge_token
-              caa-details:
-                caa-domains:
-                - letsencrypt.org
-        required: true
-      responses:
-        '200':
-          description: Successfully processed request. Validation may-or-may-not be successful.   Check response body.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ValidationWithCAAResponse'
-              example:
-                api-version: 1.0.2
-                system-params:
-                  identifier: example.com
-                  perspective-count: 2
-                  quorum-count: 1
-                is-valid: true
-                is-valid-validation: true
-                is-valid-caa: true
-                validation-method: http-generic
-                validation-details:
-                  path: "/.well-known/acme-challenge/token"
-                  expected-challenge: challenge_token
-                number-of-perspectives-used: 2
-                required-quorum-count-used: 1
-                perspectives-validation:
-                - perspective: arin.us-east-2
-                  is-valid: true
-                  details:
-                    http-generic:
-                      resolved-ip: 1.2.3.4
-                - perspective: arin.us-west-2
-                  is-valid: true
-                  details:
-                    http-generic:
-                      resolved-ip: 2.3.4.5
-                perspectives-caa:
-                - perspective: arin.us-east-2
-                  is-valid: true
-                  details:
-                    caa:
-                      nameserver-ip: 1.2.3.4
-                - perspective: arin.us-west-2
-                  is-valid: true
-                  details:
-                    caa:
-                      nameserver-ip: 5.6.7.8
-
-        '400':
-          description: Bad Request
-        '403':
-          description: Unauthorized
-        '500':
-          description: Internal Server Error
 
 components:
   schemas:
-    
+    CheckType:
+      type: string
+      enum: ['dcv', 'caa', 'dcv_with_caa']
     DomainOrIPTarget:
       type: string
       example: "example.com"
@@ -405,9 +283,12 @@ components:
     ValidationParams:
       type: object
       required:
+        - check_type
         - domain_or_ip_target
         - dcv_check_parameters
       properties:
+        check_type:
+          $ref: '#/components/schemas/CheckType'
         domain_or_ip_target:
           $ref: '#/components/schemas/DomainOrIPTarget'
         orchestration_parameters:
@@ -454,12 +335,15 @@ components:
       required:  # List the required properties here
         - domain_or_ip_target
       properties:
+        check_type:
+          $ref: '#/components/schemas/CheckType'
         domain_or_ip_target: 
           $ref: '#/components/schemas/DomainOrIPTarget'
         orchestration_parameters:
           $ref: '#/components/schemas/OrchestrationParameters'
         caa_check_parameters:
           $ref: '#/components/schemas/CaaCheckParameters'
+
     CAAResponse:
       type: object
       required:
@@ -490,6 +374,8 @@ components:
         - domain_or_ip_target
         - dcv_check_parameters
       properties:
+        check_type:
+          $ref: '#/components/schemas/CheckType'
         domain_or_ip_target:
           $ref: '#/components/schemas/DomainOrIPTarget'
         orchestration_parameters:
