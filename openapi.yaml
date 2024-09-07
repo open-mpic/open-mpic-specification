@@ -48,9 +48,8 @@ paths:
             application/json:
               schema:
                 oneOf:
-                - $ref: '#/components/schemas/ValidationResponse'
-                - $ref: '#/components/schemas/CAAResponse'
-                - $ref: '#/components/schemas/ValidationWithCAAResponse'
+                - $ref: '#/components/schemas/DCVWithCAAResponse'
+                - $ref: '#/components/schemas/DCVResponse'
               example:
                 api-version: 1.0.2
                 is-valid: true
@@ -280,6 +279,10 @@ components:
                   type: string
                   example: "Experienced a timeout when attempting to query example.com in CAA."
                   description: "An error message explaining the observed error."
+
+
+
+
     ValidationParams:
       type: object
       required:
@@ -295,39 +298,35 @@ components:
           $ref: '#/components/schemas/OrchestrationParameters'
         dcv_check_parameters:
           $ref: '#/components/schemas/DcvCheckParameters'
-          
-    ValidationResponse:
+    
+    
+    DCVResponse:
       type: object
       required:
-        - is-valid
-        - api-version
+        - check_type
+        - request_orchestration_parameters
+        - actual_orchestration_parameters
+        - is_valid
         - perspectives
-        - system-params
-        - validation-method
-        - number-of-perspectives-used
-        - required-quorum-count-used
+        - dcv_check_parameters
+        - caa_check_parameters
       properties:
-        is-valid:
+        check_type:
+          $ref: '#/components/schemas/CheckType'
+        is_valid:
           type: boolean
-          example: True
-          description: "Returns whether the validation attempt was successful (i.e., the specified quorum was reached for the requested methods)."
-
-        validation-method:
-          $ref: '#/components/schemas/ValidationMethod'
-        validation-details:
-          oneOf:
-          - $ref: '#/components/schemas/HTTPValidation'
-          - $ref: '#/components/schemas/DNSValidation'
-          description: "Matches the methods object sent in the validation-request."
+          description: "A boolean indicating if the DCV request was successful."
+        request_orchestration_parameters:
+          allOf:
+          - $ref: '#/components/schemas/OrchestrationParameters'
+          nullable: true
+        actual_orchestration_parameters:
+          $ref: '#/components/schemas/OrchestrationParameters'
         perspectives:
           $ref: '#/components/schemas/PerspectiveResponsesValidation'
-        number-of-perspectives-used:
-          type: integer
-          description: "Indicates the number of perspectives used by the server when executing the query."
-        required-quorum-count-used:
-          type: integer
-          description: "Indicates the number of perspectives that needed to succeed for is-valid to be true."
-          
+        dcv_check_parameters:
+          $ref: '#/components/schemas/DcvCheckParameters'
+
           
           
     CAAParams:
@@ -343,29 +342,6 @@ components:
           $ref: '#/components/schemas/OrchestrationParameters'
         caa_check_parameters:
           $ref: '#/components/schemas/CaaCheckParameters'
-
-    CAAResponse:
-      type: object
-      required:
-        - is-valid
-        - system-params
-        - api-version
-        - perspectives
-        - number-of-perspectives-used
-        - required-quorum-count-used
-      properties:
-        is-valid:
-          type: boolean
-          example: True
-          description: "Returns whether the validation attempt was successful (i.e., the specified quorum was reached for the requested methods and CAA record checks). This is the logical AND of is-valid-caa and is-valid-validation if they are both present in the response."
-        perspectives:
-          $ref: '#/components/schemas/PerspectiveResponsesCAA'
-        number-of-perspectives-used:
-          type: integer
-          description: "Indicates the number of perspectives used by the server when executing the query."
-        required-quorum-count-used:
-          type: integer
-          description: "Indicates the number of perspectives that needed to succeed for is-valid to be true."
           
           
     ValidationWithCAAParams:
@@ -384,51 +360,48 @@ components:
           $ref: '#/components/schemas/DcvCheckParameters'
         caa_check_parameters:
           $ref: '#/components/schemas/CaaCheckParameters'
-    ValidationWithCAAResponse:
+          
+          
+          
+    DCVWithCAAResponse:
       type: object
       required:
-        - api-version
-        - system-params
-        - is-valid
-        - is-valid-validation
-        - is-valid-caa
-        - perspectives-caa
-        - perspectives-validation
-        - validation-method
-        - number-of-perspectives-used
-        - required-quorum-count-used
+        - check_type
+        - request_orchestration_parameters
+        - actual_orchestration_parameters
+        - is_valid
+        - is_valid_dcv
+        - is_valid_caa
+        - perspectives_dcv
+        - perspectives_caa
+        - dcv_check_parameters
+        - caa_check_parameters
       properties:
-        is-valid:
+        check_type:
+          $ref: '#/components/schemas/CheckType'
+        is_valid:
           type: boolean
           description: "A boolean indicating if with both the CAA request and validation request was successful."
-          items:
-            type: string
-        is-valid-validation:
+        is_valid_dcv:
           type: boolean
-          description: "A boolean indicating if with both the validation request was successful."
-          items:
-            type: string
-        is-valid-caa:
+          description: "A boolean indicating if the dcv request was successful."
+        is_valid_caa:
           type: boolean
-          description: "A boolean indicating if with both the CAA request request was successful."
-          items:
-            type: string
-        perspectives-validation:
+          description: "A boolean indicating if with both the CAA request request was successfu."
+        request_orchestration_parameters:
+          allOf:
+          - $ref: '#/components/schemas/OrchestrationParameters'
+          nullable: true
+        actual_orchestration_parameters:
+          $ref: '#/components/schemas/OrchestrationParameters'
+        perspectives_dcv:
           $ref: '#/components/schemas/PerspectiveResponsesValidation'
-        perspectives-caa:
+        perspectives_caa:
           $ref: '#/components/schemas/PerspectiveResponsesCAA'
-        validation-method:
-          $ref: '#/components/schemas/ValidationMethod'
-        validation-details:
-          oneOf:
-          - $ref: '#/components/schemas/HTTPValidation'
-          - $ref: '#/components/schemas/DNSValidation'
-        number-of-perspectives-used:
-          type: integer
-          description: "Indicates the number of perspectives used by the server when executing the query."
-        required-quorum-count-used:
-          type: integer
-          description: "Indicates the number of perspectives that needed to succeed for is-valid to be true."
+        dcv_check_parameters:
+          $ref: '#/components/schemas/DcvCheckParameters'
+        caa_check_parameters:
+          $ref: '#/components/schemas/CaaCheckParameters'
 
 
   securitySchemes:
