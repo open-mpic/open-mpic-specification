@@ -126,7 +126,7 @@ components:
       enum: ['dcv']
     CheckTypeCAA:
       type: string
-      enum: ['dcv']
+      enum: ['caa']
     CheckTypeDCVWithCAA:
       type: string
       enum: ['dcv_with_caa']
