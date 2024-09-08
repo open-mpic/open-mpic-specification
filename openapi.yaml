@@ -1,14 +1,13 @@
 openapi: 3.0.3
 info:
-  title: Open Multi-Perspective Issuance Corroboration APIv1 Spec
+  title: Open Multi-Perspective Issuance Corroboration APIv2 Spec
   description: |-
-    This is the spec for the Open MPIC Protocol. This API implements a multiple-perspective vantage point system (using serverless functions) for domain validation.
+    This is the spec for the Open MPIC Protocol. This API implements a multiple-perspective vantage point system for Domain Control Validation (DCV) and CAA checking.
   termsOfService: https://tbd
   contact:
     email: open-mpic@princeton.edu
   license:
-    name: TBD
-    url: TBD
+    name: MIT License
   version: 2.0.0
 
 externalDocs:
@@ -31,15 +30,10 @@ paths:
               - $ref: '#/components/schemas/ValidationParams'
               - $ref: '#/components/schemas/CAAParams'
               - $ref: '#/components/schemas/ValidationWithCAAParams'
-            example:
-              system-params:
-                identifier: example.com
-                perspective-count: 6
-                quorum-count: 5
-              validation-method: http-generic
-              validation-details:
-                  path: "/.well-known/acme-challenge/token"
-                  expected-challenge: challenge_token
+            example: 
+              check_type: caa
+              domain_or_ip_target: example.com
+                      
         required: true
       responses:
         '200':
@@ -49,34 +43,72 @@ paths:
               schema:
                 oneOf:
                 - $ref: '#/components/schemas/DCVWithCAAResponse'
+                - $ref: '#/components/schemas/CAAResponse'
                 - $ref: '#/components/schemas/DCVResponse'
               example:
-                api-version: 1.0.2
-                is-valid: true
-                system-params:
-                  identifier: example.com
-                  perspective-count: 2
-                  quorum-count: 1
-                number-of-perspectives-used: 2
-                required-quorum-count-used: 1
-                validation-method: http-generic
-                validation-details:
-                  path: "/.well-known/acme-challenge/token"
-                  expected-challenge: challenge_token
+                request_orchestration_parameters: null
+                actual_orchestration_parameters:
+                  perspective_count: 6
+                  quorum_count: 4
+                  attempt_count: 1
+                is_valid: true
+                check_type: caa
                 perspectives:
-                - perspective: arin.us-east-2
-                  is-valid: true
-                  details:
-                    http-generic:
-                      resolved-ip: 1.2.3.4
-                - perspective: arin.us-west-2
-                  is-valid: false
-                  details:
-                    http-generic:
-                      resolved-ip: 4.5.6.7
-                  errors:
-                  - error-type: validation:http-generic
-                    error-message: Observed token 1234 instead of expected token challenge_token at http://example.com/.well-known/acme-challenge/token
+                  - perspective: arin.us-east-2
+                    check_passed: true
+                    errors: null
+                    timestamp_ns: 1725822089205545500
+                    check_type: caa
+                    details:
+                      caa_record_present: false
+                      found_at: null
+                      response: null
+                  - perspective: ripe.eu-west-2
+                    check_passed: true
+                    errors: null
+                    timestamp_ns: 1725822089670721500
+                    check_type: caa
+                    details:
+                      caa_record_present: false
+                      found_at: null
+                      response: null
+                  - perspective: apnic.ap-northeast-2
+                    check_passed: true
+                    errors: null
+                    timestamp_ns: 1725822089672918800
+                    check_type: caa
+                    details:
+                      caa_record_present: false
+                      found_at: null
+                      response: null
+                  - perspective: apnic.ap-southeast-1
+                    check_passed: true
+                    errors: null
+                    timestamp_ns: 1725822089693880600
+                    check_type: caa
+                    details:
+                      caa_record_present: false
+                      found_at: null
+                      response: null
+                  - perspective: ripe.eu-central-1
+                    check_passed: true
+                    errors: null
+                    timestamp_ns: 1725822089754537000
+                    check_type: caa
+                    details:
+                      caa_record_present: false
+                      found_at: null
+                      response: null
+                  - perspective: arin.us-west-2
+                    check_passed: true
+                    errors: null
+                    timestamp_ns: 1725822089912938200
+                    check_type: caa
+                    details:
+                      caa_record_present: false
+                      found_at: null
+                      response: null
+                caa_check_parameters: null
         '400':
           description: Bad Request
         '403':
@@ -89,6 +121,16 @@ components:
     CheckType:
       type: string
       enum: ['dcv', 'caa', 'dcv_with_caa']
+    CheckTypeDCV:
+      type: string
+      enum: ['dcv']
+    CheckTypeCAA:
+      type: string
+      enum: ['dcv']
+    CheckTypeDCVWithCAA:
+      type: string
+      enum: ['dcv_with_caa']
+    
     DomainOrIPTarget:
       type: string
       example: "example.com"
@@ -195,34 +237,86 @@ components:
         type: object
         required:
           - perspective
-          - is-valid
+          - check_passed
+          - timestamp_ns
+          - check_type
+          - details
+          - errors
         properties:
           perspective:
             type: string
             example: "arin.us-east-2"
             description: "A unique identifier for the perspective used in the format \"rir.location\""
-          is-valid:
+          check_passed:
             type: boolean
             example: True
             description: "Whether or not domain control validation was successful at this perspective."
+          timestamp_ns:
+            type: integer
+            description: "The epoch timestamp in nanoseconds of the check."
+          check_type:
+            $ref: '#/components/schemas/CheckType'
           details:
             type: object
+            required:
+              - http_generic
+              - dns_generic
             properties:
-              http-generic:
+              http_generic:
                 type: object
-                example: "{\"resolved-ip\": \"1.2.3.4\"}"
-                description: "Arbitrary details related to the http-generic method from that perspective."
-              dns-generic:
+                description: "Details related to the http-generic method from that perspective."
+                required:
+                  - response_history
+                  - response_url
+                  - response_status_code
+                  - response_page
+                  - resolved_ip
+                properties:
+                  response_history:
+                    description: "An array of all redirects that were given before the final response was found. It can be empty if there are no redirects. Otherwise it contains a list of objects with status codes and the URLs that returned those status codes in order starting with the original challenge URL."
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - status_code
+                      - url
+                      properties:
+                        status_code:
+                          type: integer
+                          description: "The status code retrieved from this URL."
+                        url:
+                          type: string
+                          description: "The URL that returned this status code."
+                  response_url:
+                    description: "The URL that returned the final response. This is equal to the original challenge URL if there are no redirects."
+                    type: string
+                  response_status_code:
+                    type: integer
+                    description: "The status code returned by the final URL."
+                  response_page:
+                    type: string
+                    description: "A base64 encoding of the first 100 bytes of the page returned at the final URL. If the page is less than 100 bytes, the entire page is returned in base64."
+                  resolved_ip:
+                    type: string
+                    description: "The IP address used to communicate with the domain_or_ip_target."
+                nullable: true
+              dns_generic:
                 type: object
-                example:
-                  txt-record-seen: "Full-validation-token-record"
-                description: "Arbitrary details related to the dns-generic method."
-              tls-using-alpn:
-                type: object
-                example:
-                  resolved-ip: "1.2.3.4"
-                description: "Arbitrary details related to the tls-using-alpn method."
-                
+                required:
+                - records_seen
+                - status_code
+                - ad_flag
+                properties:
+                  records_seen:
+                    type: string
+                    description: "A base64 encoding of the RRset retrieved for the DNS query. Empty string is acceptable if there are no RRsets"
+                  status_code:
+                    type: integer
+                    description: "The DNS status code resulting from the query."
+                  ad_flag:
+                    type: boolean
+                    description: "Whether or not the recursive resolver set the Authenticated Data (AD) flag in its DNS response."
+                nullable: true
           errors:
             type: array
             items:
@@ -236,6 +330,8 @@ components:
                   type: string
                   example: "Observed token 1234 instead of expected token 4567 at _acme-challenge.example.com in record type TXT."
                   description: "An error message explaining the observed error."
+            nullable: true
+            
     PerspectiveResponsesCAA:
       type: array
       description: "Detailed responses from the result of the CAA check at each perspective."
@@ -243,18 +339,31 @@ components:
         type: object
         required:
           - perspective
-          - is-valid
+          - is_valid
+          - errors
+          - timestamp_ns
+          - check_type
+          - details
         properties:
           perspective:
             type: string
             example: "arin.us-east-2"
             description: "A unique identifier for the perspective used in the format \"rir.location\""
-          is-valid:
+          is_valid:
             type: boolean
             example: True
-            description: "Indicator for whether or not domain control validation was successful at this perspective."
+            description: "Indicator for whether the CAA check was successful at this perspective."
+          check_type:
+            $ref: '#/components/schemas/CheckType'
+          timestamp_ns:
+            type: integer
+            description: "The epoch timestamp in nanoseconds of the check."
           details:
             type: object
+            required:
+              - present
+              - found_at
+              - response
             description: "Details relating to the CAA lookup at this perspective. Implementations may choose to expose additional details or omit details depending on the result."
             properties:
               present:
@@ -263,9 +372,11 @@ components:
               found_at:
                 description: "The domain where CAA records were resolved when performing CAA lookup for identifier. (CAA records may be hosted at parent zone of identifier.)"
                 type: string
+                nullable: true
               response:
-                description: "If CAA record present: text format of DNS response to CAA query."
+                description: "If CAA record present: base64 format of DNS RRset of the response to CAA query."
                 type: string
+                nullable: true
           errors:
             type: array
             items:
@@ -279,6 +390,7 @@ components:
                   type: string
                   example: "Experienced a timeout when attempting to query example.com in CAA."
                   description: "An error message explaining the observed error."
+            nullable: true
 
 
 
@@ -291,7 +403,7 @@ components:
         - dcv_check_parameters
       properties:
         check_type:
-          $ref: '#/components/schemas/CheckType'
+          $ref: '#/components/schemas/CheckTypeDCV'
         domain_or_ip_target:
           $ref: '#/components/schemas/DomainOrIPTarget'
         orchestration_parameters:
@@ -312,7 +424,7 @@ components:
         - caa_check_parameters
       properties:
         check_type:
-          $ref: '#/components/schemas/CheckType'
+          $ref: '#/components/schemas/CheckTypeDCV'
         is_valid:
           type: boolean
           description: "A boolean indicating if the DCV request was successful."
@@ -335,7 +447,7 @@ components:
         - domain_or_ip_target
       properties:
         check_type:
-          $ref: '#/components/schemas/CheckType'
+          $ref: '#/components/schemas/CheckTypeCAA'
         domain_or_ip_target: 
           $ref: '#/components/schemas/DomainOrIPTarget'
         orchestration_parameters:
@@ -344,14 +456,44 @@ components:
           $ref: '#/components/schemas/CaaCheckParameters'
           
           
+    CAAResponse:
+      type: object
+      required:
+        - check_type
+        - request_orchestration_parameters
+        - actual_orchestration_parameters
+        - is_valid
+        - perspectives
+        - caa_check_parameters
+      properties:
+        check_type:
+          $ref: '#/components/schemas/CheckTypeCAA'
+        is_valid:
+          type: boolean
+          description: "A boolean indicating if with both the CAA request and validation request was successful."
+        request_orchestration_parameters:
+          allOf:
+          - $ref: '#/components/schemas/OrchestrationParameters'
+          nullable: true
+        actual_orchestration_parameters:
+          $ref: '#/components/schemas/OrchestrationParameters'
+        perspectives:
+          $ref: '#/components/schemas/PerspectiveResponsesCAA'
+        caa_check_parameters:
+          allOf:
+          - $ref: '#/components/schemas/CaaCheckParameters'
+          nullable: true
+          
+          
     ValidationWithCAAParams:
       type: object
       required:
         - domain_or_ip_target
         - dcv_check_parameters
+        - check_type
       properties:
         check_type:
-          $ref: '#/components/schemas/CheckType'
+          $ref: '#/components/schemas/CheckTypeDCVWithCAA'
         domain_or_ip_target:
           $ref: '#/components/schemas/DomainOrIPTarget'
         orchestration_parameters:
@@ -378,7 +520,7 @@ components:
         - caa_check_parameters
       properties:
         check_type:
-          $ref: '#/components/schemas/CheckType'
+          $ref: '#/components/schemas/CheckTypeDCVWithCAA'
         is_valid:
           type: boolean
           description: "A boolean indicating if with both the CAA request and validation request was successful."
