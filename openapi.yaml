@@ -255,7 +255,10 @@ components:
             type: integer
             description: "The epoch timestamp in nanoseconds of the check."
           check_type:
-            $ref: '#/components/schemas/CheckType'
+            $ref: '#/components/schemas/CheckTypeDCV'
+          attestation:
+            type: object
+            description: "Information (e.g., digital signatures) from a remote perspective that allows for the response generated to be verified."
           details:
             type: object
             required:
@@ -354,10 +357,13 @@ components:
             example: True
             description: "Indicator for whether the CAA check was successful at this perspective."
           check_type:
-            $ref: '#/components/schemas/CheckType'
+            $ref: '#/components/schemas/CheckTypeCAA'
           timestamp_ns:
             type: integer
             description: "The epoch timestamp in nanoseconds of the check."
+          attestation:
+            type: object
+            description: "Information (e.g., digital signatures) from a remote perspective that allows for the response generated to be verified."
           details:
             type: object
             required:
