@@ -445,6 +445,7 @@ components:
       type: object
       required:  # List the required properties here
         - domain_or_ip_target
+        - check_type
       properties:
         check_type:
           $ref: '#/components/schemas/CheckTypeCAA'
