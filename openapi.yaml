@@ -1,43 +1,39 @@
 openapi: 3.0.3
 info:
-  title: Open Multi-Perspective Issuance Corroboration APIv1 Spec
+  title: Open Multi-Perspective Issuance Corroboration APIv2 Spec
   description: |-
-    This is the spec for the Open MPIC Protocol. This API implements a multiple-perspective vantage point system (using serverless functions) for domain validation.
+    This is the spec for the Open MPIC Protocol. This API implements a multiple-perspective vantage point system for Domain Control Validation (DCV) and CAA checking.
   termsOfService: https://tbd
   contact:
     email: open-mpic@princeton.edu
   license:
-    name: TBD
-    url: TBD
-  version: 1.0.2
+    name: MIT License
+  version: 2.0.0
 
 externalDocs:
   description: Find out more about the project at
-  url: https://tbd
+  url: https://open-mpic.org/
 
 servers:
-  - url: https://your-api.example.com/api/v1
+  - url: https://your-api.example.com/mpic
 
 paths:
-  /validation:
+  /mpic:
     post:
-      summary: Perform domain control validation.
+      summary: Perform MPIC.
       requestBody:
-        description: Parameters for domain validation
+        description: Parameters for MPIC
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ValidationParams'
-            example:
-              api-version: 1.0.2
-              system-params:
-                identifier: example.com
-                perspective-count: 6
-                quorum-count: 5
-              validation-method: http-generic
-              validation-details:
-                  path: "/.well-known/acme-challenge/token"
-                  expected-challenge: challenge_token
+              oneOf:
+              - $ref: '#/components/schemas/ValidationParams'
+              - $ref: '#/components/schemas/CAAParams'
+              - $ref: '#/components/schemas/ValidationWithCAAParams'
+            example: 
+              check_type: caa
+              domain_or_ip_target: example.com
+                      
         required: true
       responses:
         '200':
@@ -45,163 +41,74 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationResponse'
+                oneOf:
+                - $ref: '#/components/schemas/DCVWithCAAResponse'
+                - $ref: '#/components/schemas/CAAResponse'
+                - $ref: '#/components/schemas/DCVResponse'
               example:
-                api-version: 1.0.2
-                is-valid: true
-                system-params:
-                  identifier: example.com
-                  perspective-count: 2
-                  quorum-count: 1
-                number-of-perspectives-used: 2
-                required-quorum-count-used: 1
-                validation-method: http-generic
-                validation-details:
-                  path: "/.well-known/acme-challenge/token"
-                  expected-challenge: challenge_token
+                request_orchestration_parameters: null
+                actual_orchestration_parameters:
+                  perspective_count: 6
+                  quorum_count: 4
+                  attempt_count: 1
+                is_valid: true
+                check_type: caa
                 perspectives:
-                - perspective: arin.us-east-2
-                  is-valid: true
-                  details:
-                    http-generic:
-                      resolved-ip: 1.2.3.4
-                - perspective: arin.us-west-2
-                  is-valid: false
-                  details:
-                    http-generic:
-                      resolved-ip: 4.5.6.7
-                  errors:
-                  - error-type: validation:http-generic
-                    error-message: Observed token 1234 instead of expected token challenge_token at http://example.com/.well-known/acme-challenge/token
-        '400':
-          description: Bad Request
-        '403':
-          description: Unauthorized
-        '500':
-          description: Internal Server Error
-  /caa-check:
-    post:
-      summary: Check CAA records.
-      requestBody:
-        description: Parameters for the CAA check.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CAAParams'
-            example:
-              api-version: 1.0.2
-              system-params:
-                identifier: example.com
-                perspective-count: 6
-                quorum-count: 5
-              caa-details:
-                caa-domains:
-                  - letsencrypt.org
-        required: true
-      responses:
-        '200':
-          description: Successfully processed request. Validation may-or-may-not be successful.   Check response body.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CAAResponse'
-              example:
-                api-version: 1.0.2
-                is-valid: true
-                system-params:
-                  identifier: example.com
-                  perspective-count: 2
-                  quorum-count: 1
-                number-of-perspectives-used: 2
-                required-quorum-count-used: 1
-                perspectives:
-                - perspective: arin.us-east-2
-                  is-valid: true
-                  details:
-                    caa:
-                      nameserver-ip: 1.2.3.4
-                - perspective: arin.us-west-2
-                  is-valid: false
-                  details:
-                    caa:
-                      nameserver-ip: 2.3.4.5
-                  errors:
-                  - error-type: caa:timeout
-                    error-message: Experienced a timeout when attempting to query example.com in CAA.
-        '400':
-          description: Bad Request
-        '403':
-          description: Unauthorized
-        '500':
-          description: Internal Server Error
-  /validation-with-caa-check:
-    post:
-      summary: Perform domain control validation and check CAA records.
-      requestBody:
-        description: Parameters for the validation CAA check.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ValidationWithCAAParams'
-            example:
-              api-version: 1.0.2
-              system-params:
-                identifier: example.com
-                perspective-count: 2
-                quorum-count: 1
-              validation-method: http-generic
-              validation-details:
-                path: "/.well-known/acme-challenge/token"
-                expected-challenge: challenge_token
-              caa-details:
-                caa-domains:
-                - letsencrypt.org
-        required: true
-      responses:
-        '200':
-          description: Successfully processed request. Validation may-or-may-not be successful.   Check response body.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ValidationWithCAAResponse'
-              example:
-                api-version: 1.0.2
-                system-params:
-                  identifier: example.com
-                  perspective-count: 2
-                  quorum-count: 1
-                is-valid: true
-                is-valid-validation: true
-                is-valid-caa: true
-                validation-method: http-generic
-                validation-details:
-                  path: "/.well-known/acme-challenge/token"
-                  expected-challenge: challenge_token
-                number-of-perspectives-used: 2
-                required-quorum-count-used: 1
-                perspectives-validation:
-                - perspective: arin.us-east-2
-                  is-valid: true
-                  details:
-                    http-generic:
-                      resolved-ip: 1.2.3.4
-                - perspective: arin.us-west-2
-                  is-valid: true
-                  details:
-                    http-generic:
-                      resolved-ip: 2.3.4.5
-                perspectives-caa:
-                - perspective: arin.us-east-2
-                  is-valid: true
-                  details:
-                    caa:
-                      nameserver-ip: 1.2.3.4
-                - perspective: arin.us-west-2
-                  is-valid: true
-                  details:
-                    caa:
-                      nameserver-ip: 5.6.7.8
-
+                  - perspective: arin.us-east-2
+                    check_passed: true
+                    errors: null
+                    timestamp_ns: 1725822089205545500
+                    check_type: caa
+                    details:
+                      caa_record_present: false
+                      found_at: null
+                      response: null
+                  - perspective: ripe.eu-west-2
+                    check_passed: true
+                    errors: null
+                    timestamp_ns: 1725822089670721500
+                    check_type: caa
+                    details:
+                      caa_record_present: false
+                      found_at: null
+                      response: null
+                  - perspective: apnic.ap-northeast-2
+                    check_passed: true
+                    errors: null
+                    timestamp_ns: 1725822089672918800
+                    check_type: caa
+                    details:
+                      caa_record_present: false
+                      found_at: null
+                      response: null
+                  - perspective: apnic.ap-southeast-1
+                    check_passed: true
+                    errors: null
+                    timestamp_ns: 1725822089693880600
+                    check_type: caa
+                    details:
+                      caa_record_present: false
+                      found_at: null
+                      response: null
+                  - perspective: ripe.eu-central-1
+                    check_passed: true
+                    errors: null
+                    timestamp_ns: 1725822089754537000
+                    check_type: caa
+                    details:
+                      caa_record_present: false
+                      found_at: null
+                      response: null
+                  - perspective: arin.us-west-2
+                    check_passed: true
+                    errors: null
+                    timestamp_ns: 1725822089912938200
+                    check_type: caa
+                    details:
+                      caa_record_present: false
+                      found_at: null
+                      response: null
+                caa_check_parameters: null
         '400':
           description: Bad Request
         '403':
@@ -211,28 +118,67 @@ paths:
 
 components:
   schemas:
-    ApiVersion:
+    CheckType:
       type: string
-      pattern: '^\d*.\d*.\d*$'
-      example: '1.0.2'
-      description: "The API Version used generating request. It is formatted major-version.minor-version.revision . The server and the client must match the major version (i.e., a server expecting an API call with version \"1.*.*\" cannot except accept any API Version string not starting with \"1.\"). A server may accept a request with a minor version less than the server was configured to support, but must abort if the minor version is greater than the server's maximum understand minor version. Clients are encouraged to send the lowest API minor version that supports the features they need. Discrepancies in revision numbers between clients and servers do not result in a server aborting execution."
-  
+      enum: ['dcv', 'caa', 'dcv_with_caa']
+    CheckTypeDCV:
+      type: string
+      enum: ['dcv']
+    CheckTypeCAA:
+      type: string
+      enum: ['dcv']
+    CheckTypeDCVWithCAA:
+      type: string
+      enum: ['dcv_with_caa']
+    
+    DomainOrIPTarget:
+      type: string
+      example: "example.com"
+      description: "The FQDN (no trailing .) or public IP for which control is being validated."
+    
+    DcvCheckParameters:
+      type: object
+      properties:
+        validation_method:
+          $ref: '#/components/schemas/ValidationMethod'
+        validation_details:
+          description: "The validation method(s) to be performed at the various network perspectives."
+          oneOf:
+            - $ref: '#/components/schemas/HTTPValidation'
+            - $ref: '#/components/schemas/DNSValidation'
+    CaaCheckParameters:
+      type: object
+      properties:
+        certificate_type:
+          type: string
+          enum: ['tls-server', 'tls-server:wildcard', 's-mime'] # doc: https://swagger.io/docs/specification/data-models/enums/
+          description: "Specifies the type of certificate the CA will be signing for theapplicant as it pertains to parsing CAA records."
+        caa_domains:
+          type: array
+          example:
+            - "letsencrypt.org"
+          description: "Valid CAA domain names in issue or issuewild (e.g., CAA 0 issue     \"letsencrypt.org\")tags that permit issuance by the calling CA. If left empty, the     default configured CAA domain name(s) are used."
+          items:
+            type: string
+        
+          
+            
     ValidationMethod:
       description:  "The type of domain control validation the netwrok perspectives should use."
       type: string
       enum: ['http-generic', 'dns-generic', 'tls-using-alpn'] # doc: https://swagger.io/docs/specification/data-models/enums/
-  
+    
     HTTPValidation:
       type: object
       required: 
-      - path
+      - http_token_path
       - expected-challenge
       properties:
-        path:
+        http_token_path:
           type: string
           example: '/.well-known/acme-challenge/token'
           description: "The path to check for the challenge token. The full URL used to retrieve the expected value is constructed via the syntax \"http://\" + identifier + path."
-        expected-challenge:
+        challenge_value:
           type: string
           example: 'challenge_token'
           description: "The expected value to be observed at this URL. The value will be checked by stripping leading or trailing whitespace from both the response and the expected value and then performing an equality check on the two strings."
@@ -240,60 +186,47 @@ components:
     DNSValidation:
       type: object
       required:
-        - prefix
-        - record-type
-        - expected-challenge
+        - dns_name_prefix
+        - dns_record_type
+        - challenge_value
       properties:
-        prefix:
+        dns_name_prefix:
           type: string
           example: '_acme-challenge'
           description: "The domain label prefix where to look for the expected-challenge. If label is not an empty string, the FQDN which will be queried for the expected-challenge is constructed via the syntax label + \".\" + identifier + \".\". If label is an empty string the query is sent directly to identifier + \".\". identifier MUST be a domain to use this method."
-        record-type:
+        dns_record_type:
           type: string
           example: 'TXT'
           description: "The DNS record type to be queried."
-        expected-challenge:
+        challenge_value:
           type: string
           example: 'challenge_token'
           description: "The expected value to be observed as a response to this DNS challenge. The challenge will be completed successfully if the expected-challenge is observed byte-for-byte identical in one of the RDATA fields associated with this DNS record type at the FQDN."
-    
-    TLSALPNValidation:
+          
+    # TLS-ALPN is getting nixed from the standard until there is implementation to accompany it.
+    #TLSALPNValidation:
+    #  type: object
+    #  required:
+    #  - expected-challenge
+    #  properties:
+    #    expected-challenge:
+    #      type: string
+    #      example: 'challenge_token'
+    #      description: "The expected value to be observed inside the acmeIdentifier extension of #the self-signed certificate presented during the TLS handshake. The value will be #checked by stripping leading or trailing whitespace from both the extension value and #the expected value and then performing an equality check on the two strings."
+    OrchestrationParameters:
       type: object
-      required:
-      - expected-challenge
       properties:
-        expected-challenge:
-          type: string
-          example: 'challenge_token'
-          description: "The expected value to be observed inside the acmeIdentifier extension of the self-signed certificate presented during the TLS handshake. The value will be checked by stripping leading or trailing whitespace from both the extension value and the expected value and then performing an equality check on the two strings."
-
-    SystemParams:
-      type: object
-      required:  # List the required properties here
-        - identifier
-      properties:
-        identifier:
-          type: string
-          example: "example.com"
-          description: "The FQDN (no trailing .) or public IP for which control is being validated."
-        perspective-count:
+        perspective_count:
           type: integer
           example: 6
           description: "The number of vantage points to use for this request. Allows the implementing API endpoint flexibility in picking vantage points so long as vantage points are picked from at least two different Regional Internet Registry service regions if possible. Vantage point selection by the implementing server MUST be deterministic for a particular \"domain\" value such that requests with the same domain value to the same API endpoint always result in the same vantage point usage (presuming the API endpoint was not reconfigured between requests). Implementations SHOULD also make vantage point selection non-predictable (e.g., using a secret keyed cryptographic hash) so that an outside entity without access to the internal configuration of the API endpoint cannot predict wich vantage points will be used for a specified domain. This property CANNOT be specified with the \"perspectives\" array that forces use of a particular set of perspectives."
-        perspectives:
-          example:
-            - "arin.us-east-2"
-            - "ripe.eu-central-1"
-            - "apnic.ap-southeast-1"
-          type: array
-          description: "An array of network-perspective identifiers of the format \"rir-name.location\" where \"rir-name\" is the name of the Regional Internet Registry that contains that network perspective within their service region. \"location\" is an arbitrary identifier uniquely referring to a particular network perspective within a Regional Internet Registry service region. This option CANNOT be specified with \"perspective-count\"."
           items:
             type: string
-        quorum-count:
+        quorum_count:
           type: integer
           example: 5
           description: "The number of network perspectives that must successfully complete the the validation methods specified. As long as this value is greater than 2, the API will enforce that successful network perspectives must be spread across two Regional Internet Registry service regions (so long as there is a perspective used in at least two different Regional Internet Registry service regions). A quorum count of 0 instructs the API to operate in a monitoring only mode and always return success = true even if no vantage points succeed. In general 0 <= quorum count <= perspectives-count."
-        max-attempts:
+        max_attempts:
           type: integer
           example: 3
           description: "The maximum number of times validation or CAA checks should be retried as the result of a single API POST request. An implementation may choose to retry with the same or different perspectives each time. It is recommended implementations cap the number of distinct sets of perspectives that will ever validate a particular identifier to avoid adversaries retrying many times in the interest of getting favorable perspective sets."
@@ -304,34 +237,86 @@ components:
         type: object
         required:
           - perspective
-          - is-valid
+          - check_passed
+          - timestamp_ns
+          - check_type
+          - details
+          - errors
         properties:
           perspective:
             type: string
             example: "arin.us-east-2"
             description: "A unique identifier for the perspective used in the format \"rir.location\""
-          is-valid:
+          check_passed:
             type: boolean
             example: True
             description: "Whether or not domain control validation was successful at this perspective."
+          timestamp_ns:
+            type: integer
+            description: "The epoch timestamp in nanoseconds of the check."
+          check_type:
+            $ref: '#/components/schemas/CheckType'
           details:
             type: object
+            required:
+              - http_generic
+              - dns_generic
             properties:
-              http-generic:
+              http_generic:
                 type: object
-                example: "{\"resolved-ip\": \"1.2.3.4\"}"
-                description: "Arbitrary details related to the http-generic method from that perspective."
-              dns-generic:
+                description: "Details related to the http-generic method from that perspective."
+                required:
+                  - response_history
+                  - response_url
+                  - response_status_code
+                  - response_page
+                  - resolved_ip
+                properties:
+                  response_history:
+                    description: "An array of all redirects that were given before the final response was found. It can be empty if there are no redirects. Otherwise it contains a list of objects with status codes and the URLs that returned those status codes in order starting with the original challenge URL."
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - status_code
+                      - url
+                      properties:
+                        status_code:
+                          type: integer
+                          description: "The status code retrieved from this URL."
+                        url:
+                          type: string
+                          description: "The URL that returned this status code."
+                  response_url:
+                    description: "The URL that returned the final response. This is equal to the original challenge URL if there are no redirects."
+                    type: string
+                  response_status_code:
+                    type: integer
+                    description: "The status code returned by the final URL."
+                  response_page:
+                    type: string
+                    description: "A base64 encoding of the first 100 bytes of the page returned at the final URL. If the page is less than 100 bytes, the entire page is returned in base64."
+                  resolved_ip:
+                    type: string
+                    description: "The IP address used to communicate with the domain_or_ip_target."
+                nullable: true
+              dns_generic:
                 type: object
-                example:
-                  txt-record-seen: "Full-validation-token-record"
-                description: "Arbitrary details related to the dns-generic method."
-              tls-using-alpn:
-                type: object
-                example:
-                  resolved-ip: "1.2.3.4"
-                description: "Arbitrary details related to the tls-using-alpn method."
-                
+                required:
+                - records_seen
+                - status_code
+                - ad_flag
+                properties:
+                  records_seen:
+                    type: string
+                    description: "A base64 encoding of the RRset retrieved for the DNS query. Empty string is acceptable if there are no RRsets"
+                  status_code:
+                    type: integer
+                    description: "The DNS status code resulting from the query."
+                  ad_flag:
+                    type: boolean
+                    description: "Whether or not the recursive resolver set the Authenticated Data (AD) flag in its DNS response."
+                nullable: true
           errors:
             type: array
             items:
@@ -345,6 +330,8 @@ components:
                   type: string
                   example: "Observed token 1234 instead of expected token 4567 at _acme-challenge.example.com in record type TXT."
                   description: "An error message explaining the observed error."
+            nullable: true
+            
     PerspectiveResponsesCAA:
       type: array
       description: "Detailed responses from the result of the CAA check at each perspective."
@@ -352,18 +339,31 @@ components:
         type: object
         required:
           - perspective
-          - is-valid
+          - is_valid
+          - errors
+          - timestamp_ns
+          - check_type
+          - details
         properties:
           perspective:
             type: string
             example: "arin.us-east-2"
             description: "A unique identifier for the perspective used in the format \"rir.location\""
-          is-valid:
+          is_valid:
             type: boolean
             example: True
-            description: "Indicator for whether or not domain control validation was successful at this perspective."
+            description: "Indicator for whether the CAA check was successful at this perspective."
+          check_type:
+            $ref: '#/components/schemas/CheckType'
+          timestamp_ns:
+            type: integer
+            description: "The epoch timestamp in nanoseconds of the check."
           details:
             type: object
+            required:
+              - present
+              - found_at
+              - response
             description: "Details relating to the CAA lookup at this perspective. Implementations may choose to expose additional details or omit details depending on the result."
             properties:
               present:
@@ -372,9 +372,11 @@ components:
               found_at:
                 description: "The domain where CAA records were resolved when performing CAA lookup for identifier. (CAA records may be hosted at parent zone of identifier.)"
                 type: string
+                nullable: true
               response:
-                description: "If CAA record present: text format of DNS response to CAA query."
+                description: "If CAA record present: base64 format of DNS RRset of the response to CAA query."
                 type: string
+                nullable: true
           errors:
             type: array
             items:
@@ -388,196 +390,160 @@ components:
                   type: string
                   example: "Experienced a timeout when attempting to query example.com in CAA."
                   description: "An error message explaining the observed error."
+            nullable: true
+
+
+
+
     ValidationParams:
       type: object
       required:
-        - api-version
-        - system-params
-        - validation-method
+        - check_type
+        - domain_or_ip_target
+        - dcv_check_parameters
       properties:
-        api-version:
-          $ref: '#/components/schemas/ApiVersion'
-        system-params:
-          $ref: '#/components/schemas/SystemParams'
-        validation-method:
-          $ref: '#/components/schemas/ValidationMethod'
-        validation-details:
-          description: "The validation method(s) to be performed at the various network perspectives."
-          oneOf:
-            - $ref: '#/components/schemas/HTTPValidation'
-            - $ref: '#/components/schemas/DNSValidation'
-            - $ref: '#/components/schemas/TLSALPNValidation'
-          
-    ValidationResponse:
+        check_type:
+          $ref: '#/components/schemas/CheckTypeDCV'
+        domain_or_ip_target:
+          $ref: '#/components/schemas/DomainOrIPTarget'
+        orchestration_parameters:
+          $ref: '#/components/schemas/OrchestrationParameters'
+        dcv_check_parameters:
+          $ref: '#/components/schemas/DcvCheckParameters'
+    
+    
+    DCVResponse:
       type: object
       required:
-        - is-valid
-        - api-version
+        - check_type
+        - request_orchestration_parameters
+        - actual_orchestration_parameters
+        - is_valid
         - perspectives
-        - system-params
-        - validation-method
-        - number-of-perspectives-used
-        - required-quorum-count-used
+        - dcv_check_parameters
+        - caa_check_parameters
       properties:
-        api-version:
-          $ref: '#/components/schemas/ApiVersion'
-        is-valid:
+        check_type:
+          $ref: '#/components/schemas/CheckTypeDCV'
+        is_valid:
           type: boolean
-          example: True
-          description: "Returns whether the validation attempt was successful (i.e., the specified quorum was reached for the requested methods)."
-        system-params:
-          $ref: '#/components/schemas/SystemParams'
-        validation-method:
-          $ref: '#/components/schemas/ValidationMethod'
-        validation-details:
-          oneOf:
-          - $ref: '#/components/schemas/HTTPValidation'
-          - $ref: '#/components/schemas/DNSValidation'
-          - $ref: '#/components/schemas/TLSALPNValidation'
-          description: "Matches the methods object sent in the validation-request."
+          description: "A boolean indicating if the DCV request was successful."
+        request_orchestration_parameters:
+          allOf:
+          - $ref: '#/components/schemas/OrchestrationParameters'
+          nullable: true
+        actual_orchestration_parameters:
+          $ref: '#/components/schemas/OrchestrationParameters'
         perspectives:
           $ref: '#/components/schemas/PerspectiveResponsesValidation'
-        number-of-perspectives-used:
-          type: integer
-          description: "Indicates the number of perspectives used by the server when executing the query."
-        required-quorum-count-used:
-          type: integer
-          description: "Indicates the number of perspectives that needed to succeed for is-valid to be true."
-          
+        dcv_check_parameters:
+          $ref: '#/components/schemas/DcvCheckParameters'
+
           
           
     CAAParams:
       type: object
       required:  # List the required properties here
-        - api-version
-        - system-params
+        - domain_or_ip_target
       properties:
-        
-        api-version:
-          $ref: '#/components/schemas/ApiVersion'
-        system-params:
-          $ref: '#/components/schemas/SystemParams'
-        caa-details:
-          type: object
-          properties:
-            certificate-type:
-              type: string
-              enum: ['tls-server', 'tls-server:wildcard', 's-mime'] # doc: https://swagger.io/docs/specification/data-models/enums/
-              description: "Specifies the type of certificate the CA will be signing for the applicant as it pertains to parsing CAA records."
-            caa-domains:
-              type: array
-              example:
-                - "letsencrypt.org"
-              description: "Valid CAA domain names in issue or issuewild (e.g., CAA 0 issue     \"letsencrypt.org\")tags that permit issuance by the calling CA. If left empty, the     default configured CAA domain name(s) are used."
-              items:
-                type: string
+        check_type:
+          $ref: '#/components/schemas/CheckTypeCAA'
+        domain_or_ip_target: 
+          $ref: '#/components/schemas/DomainOrIPTarget'
+        orchestration_parameters:
+          $ref: '#/components/schemas/OrchestrationParameters'
+        caa_check_parameters:
+          $ref: '#/components/schemas/CaaCheckParameters'
+          
+          
     CAAResponse:
       type: object
       required:
-        - is-valid
-        - system-params
-        - api-version
+        - check_type
+        - request_orchestration_parameters
+        - actual_orchestration_parameters
+        - is_valid
         - perspectives
-        - number-of-perspectives-used
-        - required-quorum-count-used
+        - caa_check_parameters
       properties:
-        api-version:
-          $ref: '#/components/schemas/ApiVersion'
-        is-valid:
+        check_type:
+          $ref: '#/components/schemas/CheckTypeCAA'
+        is_valid:
           type: boolean
-          example: True
-          description: "Returns whether the validation attempt was successful (i.e., the specified quorum was reached for the requested methods and CAA record checks). This is the logical AND of is-valid-caa and is-valid-validation if they are both present in the response."
-        system-params:
-          $ref: '#/components/schemas/SystemParams'
+          description: "A boolean indicating if with both the CAA request and validation request was successful."
+        request_orchestration_parameters:
+          allOf:
+          - $ref: '#/components/schemas/OrchestrationParameters'
+          nullable: true
+        actual_orchestration_parameters:
+          $ref: '#/components/schemas/OrchestrationParameters'
         perspectives:
           $ref: '#/components/schemas/PerspectiveResponsesCAA'
-        number-of-perspectives-used:
-          type: integer
-          description: "Indicates the number of perspectives used by the server when executing the query."
-        required-quorum-count-used:
-          type: integer
-          description: "Indicates the number of perspectives that needed to succeed for is-valid to be true."
+        caa_check_parameters:
+          allOf:
+          - $ref: '#/components/schemas/CaaCheckParameters'
+          nullable: true
           
           
     ValidationWithCAAParams:
       type: object
       required:
-        - api-version
-        - system-params
-        - methods
+        - domain_or_ip_target
+        - dcv_check_parameters
+        - check_type
       properties:
-        api-version:
-          $ref: '#/components/schemas/ApiVersion'
-        system-params:
-          $ref: '#/components/schemas/SystemParams'
-        validation-method:
-          $ref: '#/components/schemas/ValidationMethod'
-        validation-details:
-          anyOf:
-            - $ref: '#/components/schemas/HTTPValidation'
-            - $ref: '#/components/schemas/DNSValidation'
-            - $ref: '#/components/schemas/TLSALPNValidation'
-          description: "The validation method(s) to be performed at the various network perspectives."
-        caa-details:
-          type: object
-          properties:
-            caa-domains:
-              type: array
-              example:
-                - "letsencrypt.org"
-              description: "Valid CAA domain names in issue or issuewild (e.g., CAA 0 issue     \"letsencrypt.org\")tags that permit issuance by the calling CA. If left empty, the     default configured CAA domain name(s) are used."
-              items:
-                type: string
-    ValidationWithCAAResponse:
+        check_type:
+          $ref: '#/components/schemas/CheckTypeDCVWithCAA'
+        domain_or_ip_target:
+          $ref: '#/components/schemas/DomainOrIPTarget'
+        orchestration_parameters:
+          $ref: '#/components/schemas/OrchestrationParameters'
+        dcv_check_parameters:
+          $ref: '#/components/schemas/DcvCheckParameters'
+        caa_check_parameters:
+          $ref: '#/components/schemas/CaaCheckParameters'
+          
+          
+          
+    DCVWithCAAResponse:
       type: object
       required:
-        - api-version
-        - system-params
-        - is-valid
-        - is-valid-validation
-        - is-valid-caa
-        - perspectives-caa
-        - perspectives-validation
-        - validation-method
-        - number-of-perspectives-used
-        - required-quorum-count-used
+        - check_type
+        - request_orchestration_parameters
+        - actual_orchestration_parameters
+        - is_valid
+        - is_valid_dcv
+        - is_valid_caa
+        - perspectives_dcv
+        - perspectives_caa
+        - dcv_check_parameters
+        - caa_check_parameters
       properties:
-        api-version:
-          $ref: '#/components/schemas/ApiVersion'
-        system-params:
-          $ref: '#/components/schemas/SystemParams'
-        is-valid:
+        check_type:
+          $ref: '#/components/schemas/CheckTypeDCVWithCAA'
+        is_valid:
           type: boolean
           description: "A boolean indicating if with both the CAA request and validation request was successful."
-          items:
-            type: string
-        is-valid-validation:
+        is_valid_dcv:
           type: boolean
-          description: "A boolean indicating if with both the validation request was successful."
-          items:
-            type: string
-        is-valid-caa:
+          description: "A boolean indicating if the dcv request was successful."
+        is_valid_caa:
           type: boolean
-          description: "A boolean indicating if with both the CAA request request was successful."
-          items:
-            type: string
-        perspectives-validation:
+          description: "A boolean indicating if with both the CAA request request was successfu."
+        request_orchestration_parameters:
+          allOf:
+          - $ref: '#/components/schemas/OrchestrationParameters'
+          nullable: true
+        actual_orchestration_parameters:
+          $ref: '#/components/schemas/OrchestrationParameters'
+        perspectives_dcv:
           $ref: '#/components/schemas/PerspectiveResponsesValidation'
-        perspectives-caa:
+        perspectives_caa:
           $ref: '#/components/schemas/PerspectiveResponsesCAA'
-        validation-method:
-          $ref: '#/components/schemas/ValidationMethod'
-        validation-details:
-          oneOf:
-          - $ref: '#/components/schemas/HTTPValidation'
-          - $ref: '#/components/schemas/DNSValidation'
-          - $ref: '#/components/schemas/TLSALPNValidation'
-        number-of-perspectives-used:
-          type: integer
-          description: "Indicates the number of perspectives used by the server when executing the query."
-        required-quorum-count-used:
-          type: integer
-          description: "Indicates the number of perspectives that needed to succeed for is-valid to be true."
+        dcv_check_parameters:
+          $ref: '#/components/schemas/DcvCheckParameters'
+        caa_check_parameters:
+          $ref: '#/components/schemas/CaaCheckParameters'
 
 
   securitySchemes:
