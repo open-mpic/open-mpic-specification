@@ -172,7 +172,7 @@ components:
       type: object
       required: 
       - http_token_path
-      - expected-challenge
+      - challenge_value
       properties:
         http_token_path:
           type: string
@@ -220,16 +220,14 @@ components:
           type: integer
           example: 6
           description: "The number of vantage points to use for this request. Allows the implementing API endpoint flexibility in picking vantage points so long as vantage points are picked from at least two different Regional Internet Registry service regions if possible. Vantage point selection by the implementing server MUST be deterministic for a particular \"domain\" value such that requests with the same domain value to the same API endpoint always result in the same vantage point usage (presuming the API endpoint was not reconfigured between requests). Implementations SHOULD also make vantage point selection non-predictable (e.g., using a secret keyed cryptographic hash) so that an outside entity without access to the internal configuration of the API endpoint cannot predict wich vantage points will be used for a specified domain. This property CANNOT be specified with the \"perspectives\" array that forces use of a particular set of perspectives."
-          items:
-            type: string
         quorum_count:
           type: integer
           example: 5
           description: "The number of network perspectives that must successfully complete the the validation methods specified. As long as this value is greater than 2, the API will enforce that successful network perspectives must be spread across two Regional Internet Registry service regions (so long as there is a perspective used in at least two different Regional Internet Registry service regions). A quorum count of 0 instructs the API to operate in a monitoring only mode and always return success = true even if no vantage points succeed. In general 0 <= quorum count <= perspectives-count."
-        max_attempts:
+        attempt_count:
           type: integer
           example: 3
-          description: "The maximum number of times validation or CAA checks should be retried as the result of a single API POST request. An implementation may choose to retry with the same or different perspectives each time. It is recommended implementations cap the number of distinct sets of perspectives that will ever validate a particular identifier to avoid adversaries retrying many times in the interest of getting favorable perspective sets."
+          description: "The number of times validation or CAA checks has been retried to get the result of a single API POST request. An implementation may choose to retry with the same or different perspectives each time. It is recommended implementations cap the number of distinct sets of perspectives that will ever validate a particular identifier to avoid adversaries retrying many times in the interest of getting favorable perspective sets."
     PerspectiveResponsesValidation:
       type: array
       description: "Detailed responses from the result of the validation attempt at each perspective."
@@ -253,6 +251,7 @@ components:
             description: "Whether or not domain control validation was successful at this perspective."
           timestamp_ns:
             type: integer
+            format: int64
             description: "The epoch timestamp in nanoseconds of the check."
           check_type:
             $ref: '#/components/schemas/CheckTypeDCV'
@@ -325,11 +324,11 @@ components:
             items:
               type: object
               properties:
-                error-type:
+                error_type:
                   type: string
                   example: "validation:dns-generic"
                   description: "The type of the error in the format \"type:subtype\". If associated with a validation method the error type should read \"validation:affected-method\"."
-                error-message:
+                error_message:
                   type: string
                   example: "Observed token 1234 instead of expected token 4567 at _acme-challenge.example.com in record type TXT."
                   description: "An error message explaining the observed error."
@@ -342,7 +341,7 @@ components:
         type: object
         required:
           - perspective
-          - is_valid
+          - check_passed
           - errors
           - timestamp_ns
           - check_type
@@ -352,7 +351,7 @@ components:
             type: string
             example: "arin.us-east-2"
             description: "A unique identifier for the perspective used in the format \"rir.location\""
-          is_valid:
+          check_passed:
             type: boolean
             example: True
             description: "Indicator for whether the CAA check was successful at this perspective."
@@ -360,6 +359,7 @@ components:
             $ref: '#/components/schemas/CheckTypeCAA'
           timestamp_ns:
             type: integer
+            format: int64
             description: "The epoch timestamp in nanoseconds of the check."
           attestation:
             type: object
@@ -367,12 +367,12 @@ components:
           details:
             type: object
             required:
-              - present
+              - caa_record_present
               - found_at
               - response
             description: "Details relating to the CAA lookup at this perspective. Implementations may choose to expose additional details or omit details depending on the result."
             properties:
-              present:
+              caa_record_present:
                 description: "Indicates if a record was found when resolving CAA records for an identifier."
                 type: boolean
               found_at:
@@ -388,11 +388,11 @@ components:
             items:
               type: object
               properties:
-                error-type:
+                error_type:
                   type: string
                   example: "caa:timeout"
                   description: "The type of the error in the format \"type:subtype\"."
-                error-message:
+                error_message:
                   type: string
                   example: "Experienced a timeout when attempting to query example.com in CAA."
                   description: "An error message explaining the observed error."
@@ -427,7 +427,6 @@ components:
         - is_valid
         - perspectives
         - dcv_check_parameters
-        - caa_check_parameters
       properties:
         check_type:
           $ref: '#/components/schemas/CheckTypeDCV'
@@ -554,8 +553,9 @@ components:
 
 
   securitySchemes:
-    bearerAuth:            # arbitrary name for the security scheme
-      type: http
-      scheme: bearer
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
 security:
-  - bearerAuth: []
+  - apiKeyAuth: []
