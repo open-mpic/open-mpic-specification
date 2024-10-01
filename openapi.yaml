@@ -427,7 +427,6 @@ components:
         - is_valid
         - perspectives
         - dcv_check_parameters
-        - caa_check_parameters
       properties:
         check_type:
           $ref: '#/components/schemas/CheckTypeDCV'
