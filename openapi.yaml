@@ -362,16 +362,20 @@ components:
             type: object
             properties:
               acme_http_01:
-                $allOf: '#/components/schemas/DetailsHTTPMethod'
+                allOf:
+                - $ref: '#/components/schemas/DetailsHTTPMethod'
                 nullable: true
               acme_dns_01:
-                $allOf: '#/components/schemas/DetailsDNSMethod'
+                allOf: 
+                - $ref: '#/components/schemas/DetailsDNSMethod'
                 nullable: true
               website_change_v2:
-                $allOf: '#/components/schemas/DetailsHTTPMethod'
+                allOf: 
+                - $ref: '#/components/schemas/DetailsHTTPMethod'
                 nullable: true
               dns_change:
-                $allOf: '#/components/schemas/DetailsDNSMethod'
+                allOf:
+                - $ref: '#/components/schemas/DetailsDNSMethod'
                 nullable: true
           errors:
             type: array
