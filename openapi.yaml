@@ -8,14 +8,14 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 2.0.0
+  version: 2.1.0
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
   url: https://open-mpic.org/
 
 servers:
-  - url: https://your-api.example.com/mpic
+  - url: https://your-api.example.com/
 
 paths:
   /mpic:
@@ -144,8 +144,10 @@ components:
         validation_details:
           description: "The validation method(s) to be performed at the various network perspectives."
           oneOf:
-            - $ref: '#/components/schemas/HTTPValidation'
-            - $ref: '#/components/schemas/DNSValidation'
+            - $ref: '#/components/schemas/AcmeHttp01'
+            - $ref: '#/components/schemas/AcmeDns01'
+            - $ref: '#/components/schemas/WebsiteChangeV2'
+            - $ref: '#/components/schemas/DNSChange'
     CaaCheckParameters:
       type: object
       properties:
@@ -166,24 +168,50 @@ components:
     ValidationMethod:
       description:  "The type of domain control validation the netwrok perspectives should use."
       type: string
-      enum: ['http-generic', 'dns-generic', 'tls-using-alpn'] # doc: https://swagger.io/docs/specification/data-models/enums/
+      enum: ['acme-http-01', 'website-change-v2', 'acme-dns-01', 'dns-change', 'tls-using-alpn'] # doc: https://swagger.io/docs/specification/data-models/enums/
     
-    HTTPValidation:
+
+
+    WebsiteChangeV2:
       type: object
       required: 
       - http_token_path
+      - protocol
       - expected-challenge
       properties:
         http_token_path:
           type: string
-          example: '/.well-known/acme-challenge/token'
+          example: '/.well-known/pki-validation/challenge.html'
           description: "The path to check for the challenge token. The full URL used to retrieve the expected value is constructed via the syntax \"http://\" + identifier + path."
+        challenge_value:
+          type: string
+          example: 'challenge_token'
+          description: "The expected value to be observed at this URL. The API ensures the challenge value is contained in the response webpage obtained from the domain."
+        match_regex:
+          type: string
+          example: '^\w*TOKENVAL\w*$'
+          description: "An optional regex string which must have a match in the returned webpage contents for the challenge to be successful. This is checked in addition to ensuring the token is contained in the webapge."
+        protocol:
+          description: "HTTP or HTTPS"
+          type: string
+          enum: ['http', 'https']
+
+    AcmeHttp01:
+      type: object
+      required: 
+      - token
+      - challenge_value
+      properties:
+        token:
+          type: string
+          example: 'ACME_TOKEN'
+          description: "The token for the ACME http-01 challenge as described in RFC ACME."
         challenge_value:
           type: string
           example: 'challenge_token'
           description: "The expected value to be observed at this URL. The value will be checked by stripping leading or trailing whitespace from both the response and the expected value and then performing an equality check on the two strings."
     
-    DNSValidation:
+    DNSChange:
       type: object
       required:
         - dns_name_prefix
@@ -192,8 +220,8 @@ components:
       properties:
         dns_name_prefix:
           type: string
-          example: '_acme-challenge'
-          description: "The domain label prefix where to look for the expected-challenge. If label is not an empty string, the FQDN which will be queried for the expected-challenge is constructed via the syntax label + \".\" + identifier + \".\". If label is an empty string the query is sent directly to identifier + \".\". identifier MUST be a domain to use this method."
+          example: '_dcv'
+          description: "The domain label prefix where to look for the expected-challenge. If label is not an empty string, the FQDN which will be queried for the expected-challenge is constructed via the syntax label + \".\" + domain_or_ip_target + \".\". If label is an empty string the query is sent directly to domain_or_ip_target + \".\". domain_or_ip_target MUST be a domain to use this method."
         dns_record_type:
           type: string
           example: 'TXT'
@@ -201,8 +229,78 @@ components:
         challenge_value:
           type: string
           example: 'challenge_token'
-          description: "The expected value to be observed as a response to this DNS challenge. The challenge will be completed successfully if the expected-challenge is observed byte-for-byte identical in one of the RDATA fields associated with this DNS record type at the FQDN."
+          description: "The expected value to be observed as a response to this DNS challenge. The challenge will be completed successfully if the expected-challenge is observed within one of the RDATA fields associated with this DNS record type at the FQDN."
           
+
+    AcmeDns01:
+      type: object
+      required:
+        - challenge_value
+      properties:
+        challenge_value:
+          type: string
+          example: 'challenge_token'
+          description: "The expected value to be observed as a response to this DNS challenge. The challenge will be completed successfully if the expected-challenge is observed byte-for-byte identical in one of the RDATA fields associated with this DNS record type at the _acme-challenge.domain_or_ip_target. To use this method, domain_or_ip_target MUST be a domain."
+          
+
+
+    DetailsHTTPMethod:
+      type: object
+      description: "Details related to the http-based validaiton methods from a perspective."
+      required:
+        - response_history
+        - response_url
+        - response_status_code
+        - response_page
+        - resolved_ip
+      properties:
+        response_history:
+          description: "An array of all redirects that were given before the final response was found. It can be empty if there are no redirects. Otherwise it contains a list of objects with status codes and the URLs that returned those status codes in order starting with the original challenge URL."
+          type: array
+          items:
+            type: object
+            required:
+            - status_code
+            - url
+            properties:
+              status_code:
+                type: integer
+                description: "The status code retrieved from this URL."
+              url:
+                type: string
+                description: "The URL that returned this status code."
+        response_url:
+          description: "The URL that returned the final response. This is equal to the original challenge URL if there are no redirects."
+          type: string
+        response_status_code:
+          type: integer
+          description: "The status code returned by the final URL."
+        response_page:
+          type: string
+          description: "A base64 encoding of the first 100 bytes of the page returned at the final URL. If the page is less than 100 bytes, the entire page is returned in base64."
+        resolved_ip:
+          type: string
+          description: "The IP address used to communicate with the domain_or_ip_target."
+
+    DetailsDNSMethod:
+      type: object
+      required:
+        - records_seen
+        - status_code
+        - ad_flag
+      properties:
+        records_seen:
+          type: string
+          description: "A base64 encoding of the RRset retrieved for the DNS query. Empty string is acceptable if there are no RRsets"
+        status_code:
+          type: integer
+          description: "The DNS status code resulting from the query."
+        ad_flag:
+          type: boolean
+          description: "Whether or not the recursive resolver set the Authenticated Data (AD) flag in its DNS response."
+                
+
+
     # TLS-ALPN is getting nixed from the standard until there is implementation to accompany it.
     #TLSALPNValidation:
     #  type: object
@@ -213,6 +311,7 @@ components:
     #      type: string
     #      example: 'challenge_token'
     #      description: "The expected value to be observed inside the acmeIdentifier extension of #the self-signed certificate presented during the TLS handshake. The value will be #checked by stripping leading or trailing whitespace from both the extension value and #the expected value and then performing an equality check on the two strings."
+    
     OrchestrationParameters:
       type: object
       properties:
@@ -261,64 +360,18 @@ components:
             description: "Information (e.g., digital signatures) from a remote perspective that allows for the response generated to be verified."
           details:
             type: object
-            required:
-              - http_generic
-              - dns_generic
             properties:
-              http_generic:
-                type: object
-                description: "Details related to the http-generic method from that perspective."
-                required:
-                  - response_history
-                  - response_url
-                  - response_status_code
-                  - response_page
-                  - resolved_ip
-                properties:
-                  response_history:
-                    description: "An array of all redirects that were given before the final response was found. It can be empty if there are no redirects. Otherwise it contains a list of objects with status codes and the URLs that returned those status codes in order starting with the original challenge URL."
-                    type: array
-                    items:
-                      type: object
-                      required:
-                      - status_code
-                      - url
-                      properties:
-                        status_code:
-                          type: integer
-                          description: "The status code retrieved from this URL."
-                        url:
-                          type: string
-                          description: "The URL that returned this status code."
-                  response_url:
-                    description: "The URL that returned the final response. This is equal to the original challenge URL if there are no redirects."
-                    type: string
-                  response_status_code:
-                    type: integer
-                    description: "The status code returned by the final URL."
-                  response_page:
-                    type: string
-                    description: "A base64 encoding of the first 100 bytes of the page returned at the final URL. If the page is less than 100 bytes, the entire page is returned in base64."
-                  resolved_ip:
-                    type: string
-                    description: "The IP address used to communicate with the domain_or_ip_target."
+              acme_http_01:
+                $allOf: '#/components/schemas/DetailsHTTPMethod'
                 nullable: true
-              dns_generic:
-                type: object
-                required:
-                - records_seen
-                - status_code
-                - ad_flag
-                properties:
-                  records_seen:
-                    type: string
-                    description: "A base64 encoding of the RRset retrieved for the DNS query. Empty string is acceptable if there are no RRsets"
-                  status_code:
-                    type: integer
-                    description: "The DNS status code resulting from the query."
-                  ad_flag:
-                    type: boolean
-                    description: "Whether or not the recursive resolver set the Authenticated Data (AD) flag in its DNS response."
+              acme_dns_01:
+                $allOf: '#/components/schemas/DetailsDNSMethod'
+                nullable: true
+              website_change_v2:
+                $allOf: '#/components/schemas/DetailsHTTPMethod'
+                nullable: true
+              dns_change:
+                $allOf: '#/components/schemas/DetailsDNSMethod'
                 nullable: true
           errors:
             type: array
@@ -327,7 +380,7 @@ components:
               properties:
                 error-type:
                   type: string
-                  example: "validation:dns-generic"
+                  example: "validation:acme-dns-01"
                   description: "The type of the error in the format \"type:subtype\". If associated with a validation method the error type should read \"validation:affected-method\"."
                 error-message:
                   type: string
