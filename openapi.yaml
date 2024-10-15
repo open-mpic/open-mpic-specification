@@ -176,7 +176,6 @@ components:
       type: object
       required: 
       - http_token_path
-      - protocol
       - expected-challenge
       properties:
         http_token_path:
@@ -192,7 +191,7 @@ components:
           example: '^\w*TOKENVAL\w*$'
           description: "An optional regex string which must have a match in the returned webpage contents for the challenge to be successful. This is checked in addition to ensuring the token is contained in the webapge."
         protocol:
-          description: "HTTP or HTTPS"
+          description: "HTTP (port 80) or HTTPS (port 443). If not specified, the protocol is assumed to be HTTP."
           type: string
           enum: ['http', 'https']
 
@@ -200,16 +199,16 @@ components:
       type: object
       required: 
       - token
-      - challenge_value
+      - key_authorization
       properties:
         token:
           type: string
           example: 'ACME_TOKEN'
-          description: "The token for the ACME http-01 challenge as described in RFC ACME."
-        challenge_value:
+          description: "The token for the ACME http-01 challenge as described in RFC 8555 Section 8.3."
+        key_authorization:
           type: string
-          example: 'challenge_token'
-          description: "The expected value to be observed at this URL. The value will be checked by stripping leading or trailing whitespace from both the response and the expected value and then performing an equality check on the two strings."
+          example: 'key_authorization'
+          description: "The key authorization to be sent in the HTTP GET body as described in RFC 8555 Section 8.1. The value will be checked by stripping trailing whitespace from the response and then performing an equality check on the two strings."
     
     DNSChange:
       type: object
@@ -235,12 +234,11 @@ components:
     AcmeDns01:
       type: object
       required:
-        - challenge_value
+        - key_authorization
       properties:
-        challenge_value:
+        digest value:
           type: string
-          example: 'challenge_token'
-          description: "The expected value to be observed as a response to this DNS challenge. The challenge will be completed successfully if the expected-challenge is observed byte-for-byte identical in one of the RDATA fields associated with this DNS record type at the _acme-challenge.domain_or_ip_target. To use this method, domain_or_ip_target MUST be a domain."
+          description: "The SHA-256 digest [FIPS180-4] of the key authorization as defined in RFC 8555 Section 8.4. The challenge will be completed successfully if the expected-challenge is observed byte-for-byte identical in one of the RDATA fields found with the query for _acme-challenge.{domain_or_ip_target} IN TXT. To use this method, domain_or_ip_target MUST be a domain."
           
 
 
