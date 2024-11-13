@@ -272,15 +272,15 @@ components:
       type: object
       required:
         - records_seen
-        - status_code
+        - response_code
         - ad_flag
       properties:
         records_seen:
           type: string
           description: "A base64 encoding of the RRset retrieved for the DNS query. Empty string is acceptable if there are no RRsets"
-        status_code:
+        response_code:
           type: integer
-          description: "The DNS status code resulting from the query."
+          description: "The DNS response code (RCODE) resulting from the query."
         ad_flag:
           type: boolean
           description: "Whether or not the recursive resolver set the Authenticated Data (AD) flag in its DNS response."
