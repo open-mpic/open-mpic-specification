@@ -246,13 +246,13 @@ components:
           items:
             type: object
             required:
-            - status_code
-            - url
+            - response_status_code
+            - response_url
             properties:
-              status_code:
+              response_status_code:
                 type: integer
                 description: "The status code retrieved from this URL."
-              url:
+              response_url:
                 type: string
                 description: "The URL that returned this status code."
         response_url:
