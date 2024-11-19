@@ -158,7 +158,7 @@ components:
             type: string
 
     ValidationMethod:
-      description:  "The type of domain control validation the netwrok perspectives should use."
+      description:  "The type of domain control validation the network perspectives should use."
       type: string
       enum: ['acme-http-01', 'website-change-v2', 'acme-dns-01', 'dns-change', 'tls-using-alpn'] # doc: https://swagger.io/docs/specification/data-models/enums/
 
@@ -170,8 +170,8 @@ components:
       properties:
         http_token_path:
           type: string
-          example: '/.well-known/pki-validation/challenge.html'
-          description: "The path to check for the challenge token. The full URL used to retrieve the expected value is constructed via the syntax \"http://\" + identifier + path."
+          example: 'challenge.html'
+          description: "The path to check for the challenge token. The full URL used to retrieve the expected value is constructed via the syntax \"http://\" + identifier + \"/.well-known/pki-validation/\" + path."
         challenge_value:
           type: string
           example: 'challenge_token'
@@ -210,7 +210,7 @@ components:
         dns_name_prefix:
           type: string
           example: '_dcv'
-          description: "The domain label prefix where to look for the challenge_value. If label is not an empty string, the FQDN which will be queried for the expected-challenge is constructed via the syntax label + \".\" + domain_or_ip_target + \".\". If label is an empty string the query is sent directly to domain_or_ip_target + \".\". domain_or_ip_target MUST be a domain to use this method."
+          description: "The domain label prefix where to look for the challenge_value. If label is not an empty string, the FQDN which will be queried for the challenge_value is constructed via the syntax label + \".\" + domain_or_ip_target + \".\". If label is an empty string the query is sent directly to domain_or_ip_target + \".\". domain_or_ip_target MUST be a domain to use this method."
         dns_record_type:
           type: string
           example: 'TXT'
@@ -218,8 +218,11 @@ components:
         challenge_value:
           type: string
           example: 'challenge_token'
-          description: "The expected value to be observed as a response to this DNS challenge. The challenge will be completed successfully if the expected-challenge is observed within one of the RDATA fields associated with this DNS record type at the FQDN."
-
+          description: "The expected value to be observed as a response to this DNS challenge. The challenge will be completed successfully if the challenge_value is observed within one of the RDATA fields associated with this DNS record type at the FQDN."
+        expect_exact_match:
+          type: boolean
+          example: false
+          description: "Whether or not the challenge_value must be identical to the observed challenge in the DNS record. If false, the challenge_value must be a substring of the observed challenge. Defaults to true."
     AcmeDns01:
       type: object
       required:
@@ -237,8 +240,7 @@ components:
         - response_history
         - response_url
         - response_status_code
-        - response_page # why base-64?
-        - resolved_ip  # this is nontrivial to get... may involve monkey-patching python requests library
+        - response_page
       properties:
         response_history:
           description: "An array of all redirects that were given before the final response was found. It can be empty if there are no redirects. Otherwise it contains a list of objects with status codes and the URLs that returned those status codes in order starting with the original challenge URL."
@@ -263,11 +265,10 @@ components:
           description: "The status code returned by the final URL."
         response_page:
           type: string
-          description: "A base64 encoding of the first 100 bytes of the page returned at the final URL. If the page is less than 100 bytes, the entire page is returned in base64."
+          description: "The first 100 bytes of the page returned at the final URL. If the page is less than 100 bytes, the entire page content is returned."
         resolved_ip:
           type: string
           description: "The IP address used to communicate with the domain_or_ip_target."
-
     DetailsDNSMethod:
       type: object
       required:
@@ -276,8 +277,8 @@ components:
         - ad_flag
       properties:
         records_seen:
-          type: string
-          description: "A base64 encoding of the RRset retrieved for the DNS query. Empty string is acceptable if there are no RRsets"
+          type: array
+          description: "A list of the records in the RRset retrieved for the DNS query. Empty list is acceptable if there are no RRsets"
         response_code:
           type: integer
           description: "The DNS response code (RCODE) resulting from the query."
@@ -411,7 +412,7 @@ components:
             required:
               - caa_record_present
               - found_at
-              - response
+              - records_seen
             description: "Details relating to the CAA lookup at this perspective. Implementations may choose to expose additional details or omit details depending on the result."
             properties:
               caa_record_present:
@@ -421,8 +422,8 @@ components:
                 description: "The domain where CAA records were resolved when performing CAA lookup for identifier. (CAA records may be hosted at parent zone of identifier.)"
                 type: string
                 nullable: true
-              response:
-                description: "If CAA record present: base64 format of DNS RRset of the response to CAA query."
+              records_seen:
+                description: "A list of the records in the RRset retrieved for the CAA lookup. Empty list is acceptable if there are no RRsets"
                 type: string
                 nullable: true
           errors:
