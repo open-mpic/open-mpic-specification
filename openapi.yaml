@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 2.1.0
+  version: 2.2.0
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -117,7 +117,7 @@ components:
   schemas:
     CheckType:
       type: string
-      enum: ['dcv', 'caa', 'dcv_with_caa']
+      enum: ['dcv', 'caa']
     CheckTypeDCV:
       type: string
       enum: ['dcv']
@@ -142,6 +142,11 @@ components:
             - $ref: '#/components/schemas/AcmeDns01'
             - $ref: '#/components/schemas/WebsiteChangeV2'
             - $ref: '#/components/schemas/DNSChange'
+            - $ref: '#/components/schemas/ContactPhoneTxt'
+            - $ref: '#/components/schemas/ContactPhoneCaa'
+            - $ref: '#/components/schemas/ContactEmailTxt'
+            - $ref: '#/components/schemas/ContactEmailCaa'
+            - $ref: '#/components/schemas/ReverseAddressLookup'
     CaaCheckParameters:
       type: object
       properties:
@@ -160,7 +165,8 @@ components:
     ValidationMethod:
       description:  "The type of domain control validation the network perspectives should use."
       type: string
-      enum: ['acme-http-01', 'website-change-v2', 'acme-dns-01', 'dns-change', 'tls-using-alpn'] # doc: https://swagger.io/docs/specification/data-models/enums/
+      enum: ['acme-dns-01', 'acme-http-01', 'contact-email', 'contact-phone',
+             'dns-change', 'ip-lookup', 'tls-using-alpn' 'website-change-v2',] # doc: https://swagger.io/docs/specification/data-models/enums/
 
     WebsiteChangeV2:
       type: object
@@ -179,8 +185,8 @@ components:
         match_regex:
           type: string
           example: '^\w*TOKENVAL\w*$'
-          description: "An optional regex string which must have a match in the returned webpage contents for the challenge to be successful. This is checked in addition to ensuring the token is contained in the webapge."
-        protocol:
+          description: "An optional regex string which must have a match in the returned webpage contents for the challenge to be successful. This is checked in addition to ensuring the token is contained in the webpage."
+        url_scheme:
           description: "HTTP (port 80) or HTTPS (port 443). If not specified, the protocol is assumed to be HTTP."
           type: string
           enum: ['http', 'https']
@@ -219,19 +225,85 @@ components:
           type: string
           example: 'challenge_token'
           description: "The expected value to be observed as a response to this DNS challenge. The challenge will be completed successfully if the challenge_value is observed within one of the RDATA fields associated with this DNS record type at the FQDN."
-        expect_exact_match:
+        require_exact_match:
           type: boolean
           example: false
           description: "Whether or not the challenge_value must be identical to the observed challenge in the DNS record. If false, the challenge_value must be a substring of the observed challenge. Defaults to true."
+
     AcmeDns01:
       type: object
       required:
         - key_authorization
       properties:
-        digest value:
+        key_authorization:
           type: string
           description: "The SHA-256 digest [FIPS180-4] of the key authorization as defined in RFC 8555 Section 8.4. The challenge will be completed successfully if the expected-challenge is observed byte-for-byte identical in one of the RDATA fields found with the query for _acme-challenge.{domain_or_ip_target} IN TXT. To use this method, domain_or_ip_target MUST be a domain."
-          
+
+    ContactEmailTxt:
+      type: object
+      required:
+        - challenge_value
+      properties:
+        challenge_value:
+          type: string
+          example: 'contact.me@example.com'
+          description: "The expected value to be observed in the TXT record for the email address. The challenge will be completed successfully if the challenge_value is observed in the TXT record for the email address."
+
+    ContactEmailCaa:
+      type: object
+      required:
+        - challenge_value
+        - dns_name_prefix
+      properties:
+        challenge_value:
+          type: string
+          example: 'contact.me@example.com'
+          description: "The expected value to be observed in the CAA record for the email address. The challenge will be completed successfully if the challenge_value is observed in the CAA record for the email address."
+
+    ContactPhoneTxt:
+      type: object
+      required:
+        - challenge_value
+      properties:
+        challenge_value:
+          type: string
+          example: '555-555-5555'
+          description: "The expected value to be observed in the TXT record for the phone number. The challenge will be completed successfully if the challenge_value is observed in the TXT record for the phone number."
+
+    ContactPhoneCaa:
+      type: object
+      required:
+        - challenge_value
+        - dns_name_prefix
+      properties:
+        challenge_value:
+          type: string
+          example: '555-555-5555'
+          description: "The expected value to be observed in the CAA record for the phone number. The challenge will be completed successfully if the challenge_value is observed in the CAA record for the phone number."
+        dns_name_prefix:
+          type: string
+          example: '_dcv'
+          description: "The domain label prefix where to look for the challenge_value. If label is not an empty string, the FQDN which will be queried for the challenge_value is constructed via the syntax label + \".\" + domain_or_ip_target + \".\". If label is an empty string the query is sent directly to domain_or_ip_target + \".\". domain_or_ip_target MUST be a domain to use this method."
+
+    ReverseAddressLookup:
+      type: object
+      required:
+        - challenge_value
+        - dns_record_type
+        - dns_name_prefix
+      properties:
+        challenge_value:
+          type: string
+          example: '198.0.2.1'
+          description: "The expected value to be observed in the DNS record for the IP address. The challenge will be completed successfully if the challenge_value is observed in the DNS record for the IP address."
+        dns_record_type:
+          type: string
+          example: 'A'
+          description: "The DNS record type to be queried. Must be A or AAAA."
+        dns_name_prefix:
+            type: string
+            example: '_dcv'
+            description: "The domain label prefix where to look for the challenge_value. If label is not an empty string, the FQDN which will be queried for the challenge_value is constructed via the syntax label + \".\" + domain_or_ip_target + \".\". If label is an empty string the query is sent directly to domain_or_ip_target + \".\". domain_or_ip_target MUST be a domain to use this method."
 
     DetailsHTTPMethod:
       type: object
@@ -275,6 +347,7 @@ components:
         - records_seen
         - response_code
         - ad_flag
+        - found_at
       properties:
         records_seen:
           type: array
@@ -285,6 +358,9 @@ components:
         ad_flag:
           type: boolean
           description: "Whether or not the recursive resolver set the Authenticated Data (AD) flag in its DNS response."
+        found_at:
+            type: string
+            description: "The domain where the DNS records were resolved when performing the DNS lookup for the identifier. (DNS records may be hosted at parent zone of identifier.)"
                 
     # TLS-ALPN is getting nixed from the standard until there is implementation to accompany it.
     #TLSALPNValidation:
@@ -328,8 +404,8 @@ components:
         properties:
           perspective:
             type: string
-            example: "arin.us-east-2"
-            description: "A unique identifier for the perspective used in the format \"rir.location\""
+            example: "us-east-2"
+            description: "A unique identifier for the perspective used"
           check_passed:
             type: boolean
             example: True
@@ -359,6 +435,26 @@ components:
                 - $ref: '#/components/schemas/DetailsHTTPMethod'
                 nullable: true
               dns_change:
+                allOf:
+                - $ref: '#/components/schemas/DetailsDNSMethod'
+                nullable: true
+              contact_phone_txt:
+                allOf:
+                - $ref: '#/components/schemas/DetailsDNSMethod'
+                nullable: true
+              contact_phone_caa:
+                allOf:
+                - $ref: '#/components/schemas/DetailsDNSMethod'
+                nullable: true
+              contact_email_txt:
+                allOf:
+                - $ref: '#/components/schemas/DetailsDNSMethod'
+                nullable: true
+              contact_email_caa:
+                allOf:
+                - $ref: '#/components/schemas/DetailsDNSMethod'
+                nullable: true
+              reverse_address_lookup:
                 allOf:
                 - $ref: '#/components/schemas/DetailsDNSMethod'
                 nullable: true
