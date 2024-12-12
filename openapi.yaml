@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 2.2.0
+  version: 2.3.0
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -32,6 +32,7 @@ paths:
             example: 
               check_type: caa
               domain_or_ip_target: example.com
+              trace_identifier: ac2d0392-8699-4037-a0e0-0a6db1ff8b89
         required: true
       responses:
         '200':
@@ -106,6 +107,7 @@ paths:
                       found_at: null
                       response: null
                 caa_check_parameters: null
+                trace_identifier: ac2d0392-8699-4037-a0e0-0a6db1ff8b89
         '400':
           description: Bad Request
         '403':
@@ -153,7 +155,7 @@ components:
         certificate_type:
           type: string
           enum: ['tls-server', 'tls-server:wildcard', 's-mime'] # doc: https://swagger.io/docs/specification/data-models/enums/
-          description: "Specifies the type of certificate the CA will be signing for theapplicant as it pertains to parsing CAA records."
+          description: "Specifies the type of certificate the CA will be signing for the applicant as it pertains to parsing CAA records."
         caa_domains:
           type: array
           example:
@@ -163,10 +165,22 @@ components:
             type: string
 
     ValidationMethod:
-      description:  "The type of domain control validation the network perspectives should use."
+      description: "The type of domain control validation the network perspectives should use."
       type: string
       enum: ['acme-dns-01', 'acme-http-01', 'contact-email', 'contact-phone',
-             'dns-change', 'ip-lookup', 'tls-using-alpn' 'website-change-v2',] # doc: https://swagger.io/docs/specification/data-models/enums/
+             'dns-change', 'ip-lookup', 'tls-using-alpn', 'website-change-v2'] # doc: https://swagger.io/docs/specification/data-models/enums/
+
+    TraceIdentifier:
+      type: string
+      example: 'ac2d0392-8699-4037-a0e0-0a6db1ff8b89'
+      description: "A optional unique identifier for the request. This identifier is used to track the request through the system and can be used to correlate the request with other systems."
+
+    HttpHeaders:
+      type: object
+      example: {"User-Agent": "myCA.example.com"}
+      description: "An optional dictionary of HTTP headers to be sent with the request."
+      additionalProperties:
+        type: string
 
     WebsiteChangeV2:
       type: object
@@ -190,6 +204,8 @@ components:
           description: "HTTP (port 80) or HTTPS (port 443). If not specified, the protocol is assumed to be HTTP."
           type: string
           enum: ['http', 'https']
+        http_headers:
+          $ref: '#/components/schemas/HttpHeaders'
 
     AcmeHttp01:
       type: object
@@ -205,6 +221,8 @@ components:
           type: string
           example: 'key_authorization'
           description: "The key authorization to be sent in the HTTP GET body as described in RFC 8555 Section 8.1. The value will be checked by stripping trailing whitespace from the response and then performing an equality check on the two strings."
+        http_headers:
+          $ref: '#/components/schemas/HttpHeaders'
     
     DNSChange:
       type: object
@@ -379,7 +397,7 @@ components:
         perspective_count:
           type: integer
           example: 6
-          description: "The number of vantage points to use for this request. Allows the implementing API endpoint flexibility in picking vantage points so long as vantage points are picked from at least two different Regional Internet Registry service regions if possible. Vantage point selection by the implementing server MUST be deterministic for a particular \"domain\" value such that requests with the same domain value to the same API endpoint always result in the same vantage point usage (presuming the API endpoint was not reconfigured between requests). Implementations SHOULD also make vantage point selection non-predictable (e.g., using a secret keyed cryptographic hash) so that an outside entity without access to the internal configuration of the API endpoint cannot predict wich vantage points will be used for a specified domain. This property CANNOT be specified with the \"perspectives\" array that forces use of a particular set of perspectives."
+          description: "The number of vantage points to use for this request. Allows the implementing API endpoint flexibility in picking vantage points so long as vantage points are picked from at least two different Regional Internet Registry service regions if possible. Vantage point selection by the implementing server MUST be deterministic for a particular \"domain\" value such that requests with the same domain value to the same API endpoint always result in the same vantage point usage (presuming the API endpoint was not reconfigured between requests). Implementations SHOULD also make vantage point selection non-predictable (e.g., using a secret keyed cryptographic hash) so that an outside entity without access to the internal configuration of the API endpoint cannot predict which vantage points will be used for a specified domain. This property CANNOT be specified with the \"perspectives\" array that forces use of a particular set of perspectives."
         quorum_count:
           type: integer
           example: 5
@@ -389,7 +407,7 @@ components:
           example: 3
           description: "The number of times validation or CAA checks has been retried to get the result of a single API POST request. An implementation may choose to retry with the same or different perspectives each time. It is recommended implementations cap the number of distinct sets of perspectives that will ever validate a particular identifier to avoid adversaries retrying many times in the interest of getting favorable perspective sets."
 
-    PerspectiveResponsesValidation:
+    PerspectiveResponsesDCV:
       type: array
       description: "Detailed responses from the result of the validation attempt at each perspective."
       items:
@@ -473,6 +491,13 @@ components:
                   description: "An error message explaining the observed error."
             nullable: true
 
+    PreviousAttemptResultsDCV:
+      type: array
+      description: "An array of previous attempts to validate the domain. This array is empty if this is the first attempt."
+      items:
+        $ref: '#/components/schemas/PerspectiveResponsesDCV'
+      nullable: true
+
     PerspectiveResponsesCAA:
       type: array
       description: "Detailed responses from the result of the CAA check at each perspective."
@@ -537,6 +562,13 @@ components:
                   description: "An error message explaining the observed error."
             nullable: true
 
+    PreviousAttemptResultsCAA:
+      type: array
+      description: "An array of previous attempts to check CAA. This array is empty if this is the first attempt."
+      items:
+        $ref: '#/components/schemas/PerspectiveResponsesCAA'
+      nullable: true
+
     DCVParams:
       type: object
       required:
@@ -552,6 +584,8 @@ components:
           $ref: '#/components/schemas/OrchestrationParameters'
         dcv_check_parameters:
           $ref: '#/components/schemas/DcvCheckParameters'
+        trace_identifier:
+          $ref: '#/components/schemas/TraceIdentifier'
 
     DCVResponse:
       type: object
@@ -575,9 +609,13 @@ components:
         actual_orchestration_parameters:
           $ref: '#/components/schemas/OrchestrationParameters'
         perspectives:
-          $ref: '#/components/schemas/PerspectiveResponsesValidation'
+          $ref: '#/components/schemas/PerspectiveResponsesDCV'
         dcv_check_parameters:
           $ref: '#/components/schemas/DcvCheckParameters'
+        trace_identifier:
+          $ref: '#/components/schemas/TraceIdentifier'
+        previous_attempt_results:
+          $ref: '#/components/schemas/PreviousAttemptResultsDCV'
 
     CAAParams:
       type: object
@@ -593,6 +631,8 @@ components:
           $ref: '#/components/schemas/OrchestrationParameters'
         caa_check_parameters:
           $ref: '#/components/schemas/CaaCheckParameters'
+        trace_identifier:
+          $ref: '#/components/schemas/TraceIdentifier'
           
     CAAResponse:
       type: object
@@ -621,7 +661,11 @@ components:
           allOf:
           - $ref: '#/components/schemas/CaaCheckParameters'
           nullable: true
-          
+        trace_identifier:
+          $ref: '#/components/schemas/TraceIdentifier'
+        previous_attempt_results:
+          $ref: '#/components/schemas/PreviousAttemptResultsCAA'
+
   securitySchemes:
     apiKeyAuth:
       type: apiKey
