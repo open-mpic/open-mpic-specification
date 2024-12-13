@@ -271,7 +271,6 @@ components:
       type: object
       required:
         - challenge_value
-        - dns_name_prefix
       properties:
         challenge_value:
           type: string
@@ -292,16 +291,11 @@ components:
       type: object
       required:
         - challenge_value
-        - dns_name_prefix
       properties:
         challenge_value:
           type: string
           example: '555-555-5555'
           description: "The expected value to be observed in the CAA record for the phone number. The challenge will be completed successfully if the challenge_value is observed in the CAA record for the phone number."
-        dns_name_prefix:
-          type: string
-          example: '_dcv'
-          description: "The domain label prefix where to look for the challenge_value. If label is not an empty string, the FQDN which will be queried for the challenge_value is constructed via the syntax label + \".\" + domain_or_ip_target + \".\". If label is an empty string the query is sent directly to domain_or_ip_target + \".\". domain_or_ip_target MUST be a domain to use this method."
 
     ReverseAddressLookup:
       type: object
