@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 2.3.0
+  version: 2.3.1
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -140,15 +140,15 @@ components:
         validation_details:
           description: "The validation method(s) to be performed at the various network perspectives."
           oneOf:
-            - $ref: '#/components/schemas/AcmeHttp01'
-            - $ref: '#/components/schemas/AcmeDns01'
-            - $ref: '#/components/schemas/WebsiteChangeV2'
-            - $ref: '#/components/schemas/DNSChange'
-            - $ref: '#/components/schemas/ContactPhoneTxt'
-            - $ref: '#/components/schemas/ContactPhoneCaa'
-            - $ref: '#/components/schemas/ContactEmailTxt'
-            - $ref: '#/components/schemas/ContactEmailCaa'
-            - $ref: '#/components/schemas/ReverseAddressLookup'
+            - $ref: '#/components/schemas/AcmeHttp01ValidationDetails'
+            - $ref: '#/components/schemas/AcmeDns01ValidationDetails'
+            - $ref: '#/components/schemas/WebsiteChangeV2ValidationDetails'
+            - $ref: '#/components/schemas/DNSChangeValidationDetails'
+            - $ref: '#/components/schemas/ContactPhoneTxtValidationDetails'
+            - $ref: '#/components/schemas/ContactPhoneCaaValidationDetails'
+            - $ref: '#/components/schemas/ContactEmailTxtValidationDetails'
+            - $ref: '#/components/schemas/ContactEmailCaaValidationDetails'
+            - $ref: '#/components/schemas/ReverseAddressLookupValidationDetails'
     CaaCheckParameters:
       type: object
       properties:
@@ -182,7 +182,7 @@ components:
       additionalProperties:
         type: string
 
-    WebsiteChangeV2:
+    WebsiteChangeV2ValidationDetails:
       type: object
       required: 
       - http_token_path
@@ -207,7 +207,7 @@ components:
         http_headers:
           $ref: '#/components/schemas/HttpHeaders'
 
-    AcmeHttp01:
+    AcmeHttp01ValidationDetails:
       type: object
       required: 
       - token
@@ -224,7 +224,7 @@ components:
         http_headers:
           $ref: '#/components/schemas/HttpHeaders'
     
-    DNSChange:
+    DNSChangeValidationDetails:
       type: object
       required:
         - dns_name_prefix
@@ -248,7 +248,7 @@ components:
           example: false
           description: "Whether or not the challenge_value must be identical to the observed challenge in the DNS record. If false, the challenge_value must be a substring of the observed challenge. Defaults to true."
 
-    AcmeDns01:
+    AcmeDns01ValidationDetails:
       type: object
       required:
         - key_authorization
@@ -257,7 +257,7 @@ components:
           type: string
           description: "The SHA-256 digest [FIPS180-4] of the key authorization as defined in RFC 8555 Section 8.4. The challenge will be completed successfully if the expected-challenge is observed byte-for-byte identical in one of the RDATA fields found with the query for _acme-challenge.{domain_or_ip_target} IN TXT. To use this method, domain_or_ip_target MUST be a domain."
 
-    ContactEmailTxt:
+    ContactEmailTxtValidationDetails:
       type: object
       required:
         - challenge_value
@@ -267,7 +267,7 @@ components:
           example: 'contact.me@example.com'
           description: "The expected value to be observed in the TXT record for the email address. The challenge will be completed successfully if the challenge_value is observed in the TXT record for the email address."
 
-    ContactEmailCaa:
+    ContactEmailCaaValidationDetails:
       type: object
       required:
         - challenge_value
@@ -277,7 +277,7 @@ components:
           example: 'contact.me@example.com'
           description: "The expected value to be observed in the CAA record for the email address. The challenge will be completed successfully if the challenge_value is observed in the CAA record for the email address."
 
-    ContactPhoneTxt:
+    ContactPhoneTxtValidationDetails:
       type: object
       required:
         - challenge_value
@@ -287,7 +287,7 @@ components:
           example: '555-555-5555'
           description: "The expected value to be observed in the TXT record for the phone number. The challenge will be completed successfully if the challenge_value is observed in the TXT record for the phone number."
 
-    ContactPhoneCaa:
+    ContactPhoneCaaValidationDetails:
       type: object
       required:
         - challenge_value
@@ -297,7 +297,7 @@ components:
           example: '555-555-5555'
           description: "The expected value to be observed in the CAA record for the phone number. The challenge will be completed successfully if the challenge_value is observed in the CAA record for the phone number."
 
-    ReverseAddressLookup:
+    ReverseAddressLookupValidationDetails:
       type: object
       required:
         - challenge_value
@@ -317,7 +317,7 @@ components:
             example: '_dcv'
             description: "The domain label prefix where to look for the challenge_value. If label is not an empty string, the FQDN which will be queried for the challenge_value is constructed via the syntax label + \".\" + domain_or_ip_target + \".\". If label is an empty string the query is sent directly to domain_or_ip_target + \".\". domain_or_ip_target MUST be a domain to use this method."
 
-    DetailsHTTPMethod:
+    HTTPMethodCheckResponseDetails:
       type: object
       description: "Details related to the http-based validation methods from a perspective."
       required:
@@ -353,7 +353,7 @@ components:
         resolved_ip:
           type: string
           description: "The IP address used to communicate with the domain_or_ip_target."
-    DetailsDNSMethod:
+    DNSMethodCheckResponseDetails:
       type: object
       required:
         - records_seen
@@ -436,39 +436,39 @@ components:
             properties:
               acme_http_01:
                 allOf:
-                - $ref: '#/components/schemas/DetailsHTTPMethod'
+                - $ref: '#/components/schemas/HTTPMethodCheckResponseDetails'
                 nullable: true
               acme_dns_01:
                 allOf: 
-                - $ref: '#/components/schemas/DetailsDNSMethod'
+                - $ref: '#/components/schemas/DNSMethodCheckResponseDetails'
                 nullable: true
               website_change_v2:
                 allOf: 
-                - $ref: '#/components/schemas/DetailsHTTPMethod'
+                - $ref: '#/components/schemas/HTTPMethodCheckResponseDetails'
                 nullable: true
               dns_change:
                 allOf:
-                - $ref: '#/components/schemas/DetailsDNSMethod'
+                - $ref: '#/components/schemas/DNSMethodCheckResponseDetails'
                 nullable: true
               contact_phone_txt:
                 allOf:
-                - $ref: '#/components/schemas/DetailsDNSMethod'
+                - $ref: '#/components/schemas/DNSMethodCheckResponseDetails'
                 nullable: true
               contact_phone_caa:
                 allOf:
-                - $ref: '#/components/schemas/DetailsDNSMethod'
+                - $ref: '#/components/schemas/DNSMethodCheckResponseDetails'
                 nullable: true
               contact_email_txt:
                 allOf:
-                - $ref: '#/components/schemas/DetailsDNSMethod'
+                - $ref: '#/components/schemas/DNSMethodCheckResponseDetails'
                 nullable: true
               contact_email_caa:
                 allOf:
-                - $ref: '#/components/schemas/DetailsDNSMethod'
+                - $ref: '#/components/schemas/DNSMethodCheckResponseDetails'
                 nullable: true
               reverse_address_lookup:
                 allOf:
-                - $ref: '#/components/schemas/DetailsDNSMethod'
+                - $ref: '#/components/schemas/DNSMethodCheckResponseDetails'
                 nullable: true
           errors:
             type: array
