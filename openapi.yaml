@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 2.3.1
+  version: 2.5.0
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -135,8 +135,6 @@ components:
     DcvCheckParameters:
       type: object
       properties:
-        validation_method:
-          $ref: '#/components/schemas/ValidationMethod'
         validation_details:
           description: "The validation method(s) to be performed at the various network perspectives."
           oneOf:
@@ -144,11 +142,20 @@ components:
             - $ref: '#/components/schemas/AcmeDns01ValidationDetails'
             - $ref: '#/components/schemas/WebsiteChangeV2ValidationDetails'
             - $ref: '#/components/schemas/DNSChangeValidationDetails'
-            - $ref: '#/components/schemas/ContactPhoneTxtValidationDetails'
-            - $ref: '#/components/schemas/ContactPhoneCaaValidationDetails'
-            - $ref: '#/components/schemas/ContactEmailTxtValidationDetails'
-            - $ref: '#/components/schemas/ContactEmailCaaValidationDetails'
+            - $ref: '#/components/schemas/ContactPhoneValidationDetails'
+            - $ref: '#/components/schemas/ContactEmailValidationDetails'
             - $ref: '#/components/schemas/ReverseAddressLookupValidationDetails'
+          discriminator:
+            propertyName: validation_method
+            mapping:
+              acme-http-01: '#/components/schemas/AcmeHttp01ValidationDetails'
+              acme-dns-01: '#/components/schemas/AcmeDns01ValidationDetails'
+              website-change-v2: '#/components/schemas/WebsiteChangeV2ValidationDetails'
+              dns-change: '#/components/schemas/DNSChangeValidationDetails'
+              contact-phone: '#/components/schemas/ContactPhoneValidationDetails'
+              contact-email: '#/components/schemas/ContactEmailValidationDetails'
+              reverse-address-lookup: '#/components/schemas/ReverseAddressLookupValidationDetails'
+
     CaaCheckParameters:
       type: object
       properties:
@@ -160,7 +167,7 @@ components:
           type: array
           example:
             - "letsencrypt.org"
-          description: "Valid CAA domain names in issue or issuewild (e.g., CAA 0 issue     \"letsencrypt.org\")tags that permit issuance by the calling CA. If left empty, the     default configured CAA domain name(s) are used."
+          description: "Valid CAA domain names in issue or issuewild (e.g., CAA 0 issue \"letsencrypt.org\")tags that permit issuance by the calling CA. If left empty, the default configured CAA domain name(s) are used."
           items:
             type: string
 
@@ -182,140 +189,134 @@ components:
       additionalProperties:
         type: string
 
-    WebsiteChangeV2ValidationDetails:
+    BaseValidationDetails:
       type: object
-      required: 
-      - http_token_path
-      - challenge_value
+      required:
+        - validation_method
       properties:
-        http_token_path:
-          type: string
-          example: 'challenge.html'
-          description: "The path to check for the challenge token. The full URL used to retrieve the expected value is constructed via the syntax \"http://\" + identifier + \"/.well-known/pki-validation/\" + path."
-        challenge_value:
-          type: string
-          example: 'challenge_token'
-          description: "The expected value to be observed at this URL. The API ensures the challenge value is contained in the response webpage obtained from the domain."
-        match_regex:
-          type: string
-          example: '^\w*TOKENVAL\w*$'
-          description: "An optional regex string which must have a match in the returned webpage contents for the challenge to be successful. This is checked in addition to ensuring the token is contained in the webpage."
-        url_scheme:
-          description: "HTTP (port 80) or HTTPS (port 443). If not specified, the protocol is assumed to be HTTP."
-          type: string
-          enum: ['http', 'https']
-        http_headers:
-          $ref: '#/components/schemas/HttpHeaders'
+        validation_method:
+          $ref: '#/components/schemas/ValidationMethod'
+
+    WebsiteChangeV2ValidationDetails:
+      allOf:
+        - $ref: '#/components/schemas/BaseValidationDetails'
+        - type: object
+          required:
+            - http_token_path
+            - challenge_value
+          properties:
+            http_token_path:
+              type: string
+              example: 'challenge.html'
+              description: "The path to check for the challenge token. The full URL used to retrieve the expected value is constructed via the syntax \"http://\" + identifier + \"/.well-known/pki-validation/\" + path."
+            challenge_value:
+              type: string
+              example: 'challenge_token'
+              description: "The expected value to be observed at this URL. The API ensures the challenge value is contained in the response webpage obtained from the domain."
+            match_regex:
+              type: string
+              example: '^\w*TOKENVAL\w*$'
+              description: "An optional regex string which must have a match in the returned webpage contents for the challenge to be successful. This is checked in addition to ensuring the token is contained in the webpage."
+            url_scheme:
+              description: "HTTP (port 80) or HTTPS (port 443). If not specified, the protocol is assumed to be HTTP."
+              type: string
+              enum: ['http', 'https']
+            http_headers:
+              $ref: '#/components/schemas/HttpHeaders'
 
     AcmeHttp01ValidationDetails:
-      type: object
-      required: 
-      - token
-      - key_authorization
-      properties:
-        token:
-          type: string
-          example: 'ACME_TOKEN'
-          description: "The token for the ACME http-01 challenge as described in RFC 8555 Section 8.3."
-        key_authorization:
-          type: string
-          example: 'key_authorization'
-          description: "The key authorization to be sent in the HTTP GET body as described in RFC 8555 Section 8.1. The value will be checked by stripping trailing whitespace from the response and then performing an equality check on the two strings."
-        http_headers:
-          $ref: '#/components/schemas/HttpHeaders'
-    
+      allOf:
+        - $ref: '#/components/schemas/BaseValidationDetails'
+        - type: object
+          required:
+            - token
+            - key_authorization
+          properties:
+            token:
+              type: string
+              example: 'ACME_TOKEN'
+              description: "The token for the ACME http-01 challenge as described in RFC 8555 Section 8.3."
+            key_authorization:
+              type: string
+              example: 'key_authorization'
+              description: "The key authorization to be sent in the HTTP GET body as described in RFC 8555 Section 8.1. The value will be checked by stripping trailing whitespace from the response and then performing an equality check on the two strings."
+            http_headers:
+              $ref: '#/components/schemas/HttpHeaders'
+
+    BaseDNSChangeValidationDetails:
+      allOf:
+        - $ref: '#/components/schemas/BaseValidationDetails'
+        - type: object
+          required:
+            - dns_record_type
+            - challenge_value
+            - dns_name_prefix
+          properties:
+            challenge_value:
+              type: string
+              example: 'challenge_token'
+              description: "The expected value to be observed as a response to this DNS challenge. The challenge will be completed successfully if the challenge_value is observed within one of the RDATA fields associated with this DNS record type at the FQDN."
+            dns_name_prefix:
+              type: string
+              example: '_dcv'
+              description: "The domain label prefix where to look for the challenge_value. If label is not an empty string, the FQDN which will be queried for the challenge_value is constructed via the syntax label + \".\" + domain_or_ip_target + \".\". If label is an empty string the query is sent directly to domain_or_ip_target + \".\". domain_or_ip_target MUST be a domain to use this method."
+            dns_record_type:
+              type: string
+              example: 'TXT'
+              description: "The DNS record type to be queried."
+            require_exact_match:
+              type: boolean
+              example: false
+              description: "Whether or not the challenge_value must be identical to the observed challenge in the DNS record. If false, the challenge_value must be a substring of the observed challenge. Defaults to true."
+
     DNSChangeValidationDetails:
-      type: object
-      required:
-        - dns_name_prefix
-        - dns_record_type
-        - challenge_value
-      properties:
-        dns_name_prefix:
-          type: string
-          example: '_dcv'
-          description: "The domain label prefix where to look for the challenge_value. If label is not an empty string, the FQDN which will be queried for the challenge_value is constructed via the syntax label + \".\" + domain_or_ip_target + \".\". If label is an empty string the query is sent directly to domain_or_ip_target + \".\". domain_or_ip_target MUST be a domain to use this method."
-        dns_record_type:
-          type: string
-          example: 'TXT'
-          description: "The DNS record type to be queried."
-        challenge_value:
-          type: string
-          example: 'challenge_token'
-          description: "The expected value to be observed as a response to this DNS challenge. The challenge will be completed successfully if the challenge_value is observed within one of the RDATA fields associated with this DNS record type at the FQDN."
-        require_exact_match:
-          type: boolean
-          example: false
-          description: "Whether or not the challenge_value must be identical to the observed challenge in the DNS record. If false, the challenge_value must be a substring of the observed challenge. Defaults to true."
+      allOf:
+        - $ref: '#/components/schemas/BaseDNSChangeValidationDetails'
+        - type: object
+          required:
+            - dns_record_type
+          properties:
+            dns_record_type:
+              type: string
+              enum: ['CNAME', 'TXT', 'CAA']
 
     AcmeDns01ValidationDetails:
-      type: object
-      required:
-        - key_authorization
-      properties:
-        key_authorization:
-          type: string
-          description: "The SHA-256 digest [FIPS180-4] of the key authorization as defined in RFC 8555 Section 8.4. The challenge will be completed successfully if the expected-challenge is observed byte-for-byte identical in one of the RDATA fields found with the query for _acme-challenge.{domain_or_ip_target} IN TXT. To use this method, domain_or_ip_target MUST be a domain."
+      allOf:
+        - $ref: '#/components/schemas/BaseValidationDetails'
+        - type: object
+          required:
+            - key_authorization
+          properties:
+            key_authorization:
+              type: string
+              description: "The SHA-256 digest [FIPS180-4] of the key authorization as defined in RFC 8555 Section 8.4. The challenge will be completed successfully if the expected-challenge is observed byte-for-byte identical in one of the RDATA fields found with the query for _acme-challenge.{domain_or_ip_target} IN TXT. To use this method, domain_or_ip_target MUST be a domain."
 
-    ContactEmailTxtValidationDetails:
-      type: object
-      required:
-        - challenge_value
-      properties:
-        challenge_value:
-          type: string
-          example: 'contact.me@example.com'
-          description: "The expected value to be observed in the TXT record for the email address. The challenge will be completed successfully if the challenge_value is observed in the TXT record for the email address."
+    ContactEmailValidationDetails:
+      allOf:
+        - $ref: '#/components/schemas/BaseDNSChangeValidationDetails'
+        - type: object
+          properties:
+            dns_record_type:
+              type: string
+              enum: ['CAA', 'TXT']
 
-    ContactEmailCaaValidationDetails:
-      type: object
-      required:
-        - challenge_value
-      properties:
-        challenge_value:
-          type: string
-          example: 'contact.me@example.com'
-          description: "The expected value to be observed in the CAA record for the email address. The challenge will be completed successfully if the challenge_value is observed in the CAA record for the email address."
-
-    ContactPhoneTxtValidationDetails:
-      type: object
-      required:
-        - challenge_value
-      properties:
-        challenge_value:
-          type: string
-          example: '555-555-5555'
-          description: "The expected value to be observed in the TXT record for the phone number. The challenge will be completed successfully if the challenge_value is observed in the TXT record for the phone number."
-
-    ContactPhoneCaaValidationDetails:
-      type: object
-      required:
-        - challenge_value
-      properties:
-        challenge_value:
-          type: string
-          example: '555-555-5555'
-          description: "The expected value to be observed in the CAA record for the phone number. The challenge will be completed successfully if the challenge_value is observed in the CAA record for the phone number."
+    ContactPhoneValidationDetails:
+      allOf:
+        - $ref: '#/components/schemas/BaseDNSChangeValidationDetails'
+        - type: object
+          properties:
+            dns_record_type:
+              type: string
+              enum: ['CAA', 'TXT']
 
     ReverseAddressLookupValidationDetails:
-      type: object
-      required:
-        - challenge_value
-        - dns_record_type
-        - dns_name_prefix
-      properties:
-        challenge_value:
-          type: string
-          example: '198.0.2.1'
-          description: "The expected value to be observed in the DNS record for the IP address. The challenge will be completed successfully if the challenge_value is observed in the DNS record for the IP address."
-        dns_record_type:
-          type: string
-          example: 'A'
-          description: "The DNS record type to be queried. Must be A or AAAA."
-        dns_name_prefix:
-            type: string
-            example: '_dcv'
-            description: "The domain label prefix where to look for the challenge_value. If label is not an empty string, the FQDN which will be queried for the challenge_value is constructed via the syntax label + \".\" + domain_or_ip_target + \".\". If label is an empty string the query is sent directly to domain_or_ip_target + \".\". domain_or_ip_target MUST be a domain to use this method."
+      allOf:
+        - $ref: '#/components/schemas/BaseDNSChangeValidationDetails'
+        - type: object
+          properties:
+            dns_record_type:
+              type: string
+              enum: ['A', 'AAAA']
 
     HTTPMethodCheckResponseDetails:
       type: object
@@ -353,6 +354,7 @@ components:
         resolved_ip:
           type: string
           description: "The IP address used to communicate with the domain_or_ip_target."
+
     DNSMethodCheckResponseDetails:
       type: object
       required:
