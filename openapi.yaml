@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 2.3.1
+  version: 2.4.0
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -144,10 +144,8 @@ components:
             - $ref: '#/components/schemas/AcmeDns01ValidationDetails'
             - $ref: '#/components/schemas/WebsiteChangeV2ValidationDetails'
             - $ref: '#/components/schemas/DNSChangeValidationDetails'
-            - $ref: '#/components/schemas/ContactPhoneTxtValidationDetails'
-            - $ref: '#/components/schemas/ContactPhoneCaaValidationDetails'
-            - $ref: '#/components/schemas/ContactEmailTxtValidationDetails'
-            - $ref: '#/components/schemas/ContactEmailCaaValidationDetails'
+            - $ref: '#/components/schemas/ContactPhoneValidationDetails'
+            - $ref: '#/components/schemas/ContactEmailValidationDetails'
             - $ref: '#/components/schemas/ReverseAddressLookupValidationDetails'
     CaaCheckParameters:
       type: object
@@ -257,45 +255,35 @@ components:
           type: string
           description: "The SHA-256 digest [FIPS180-4] of the key authorization as defined in RFC 8555 Section 8.4. The challenge will be completed successfully if the expected-challenge is observed byte-for-byte identical in one of the RDATA fields found with the query for _acme-challenge.{domain_or_ip_target} IN TXT. To use this method, domain_or_ip_target MUST be a domain."
 
-    ContactEmailTxtValidationDetails:
+    ContactEmailValidationDetails:
       type: object
       required:
         - challenge_value
+        - dns_record_type
       properties:
         challenge_value:
           type: string
           example: 'contact.me@example.com'
-          description: "The expected value to be observed in the TXT record for the email address. The challenge will be completed successfully if the challenge_value is observed in the TXT record for the email address."
-
-    ContactEmailCaaValidationDetails:
-      type: object
-      required:
-        - challenge_value
-      properties:
-        challenge_value:
+          description: "The expected value to be observed in the DNS record for the email address. The challenge will be completed successfully if the challenge_value is observed in the TXT record for the email address."
+        dns_record_type:
           type: string
-          example: 'contact.me@example.com'
-          description: "The expected value to be observed in the CAA record for the email address. The challenge will be completed successfully if the challenge_value is observed in the CAA record for the email address."
+          example: 'TXT'
+          description: "The DNS record type to be queried. Must be TXT or CAA."
 
-    ContactPhoneTxtValidationDetails:
+    ContactPhoneValidationDetails:
       type: object
       required:
         - challenge_value
+        - dns_record_type
       properties:
         challenge_value:
           type: string
           example: '555-555-5555'
-          description: "The expected value to be observed in the TXT record for the phone number. The challenge will be completed successfully if the challenge_value is observed in the TXT record for the phone number."
-
-    ContactPhoneCaaValidationDetails:
-      type: object
-      required:
-        - challenge_value
-      properties:
-        challenge_value:
+          description: "The expected value to be observed in the DNS record for the phone number. The challenge will be completed successfully if the challenge_value is observed in the TXT record for the phone number."
+        dns_record_type:
           type: string
-          example: '555-555-5555'
-          description: "The expected value to be observed in the CAA record for the phone number. The challenge will be completed successfully if the challenge_value is observed in the CAA record for the phone number."
+          example: 'TXT'
+          description: "The DNS record type to be queried. Must be TXT or CAA."
 
     ReverseAddressLookupValidationDetails:
       type: object
