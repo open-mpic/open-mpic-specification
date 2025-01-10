@@ -50,6 +50,7 @@ paths:
                   quorum_count: 4
                   attempt_count: 1
                 is_valid: true
+                domain_or_ip_target: example.com
                 check_type: caa
                 perspectives:
                   - perspective_code: us-east-2
@@ -583,36 +584,6 @@ components:
         trace_identifier:
           $ref: '#/components/schemas/TraceIdentifier'
 
-    DCVResponse:
-      type: object
-      required:
-        - check_type
-        - request_orchestration_parameters
-        - actual_orchestration_parameters
-        - is_valid
-        - perspectives
-        - dcv_check_parameters
-      properties:
-        check_type:
-          $ref: '#/components/schemas/CheckTypeDCV'
-        is_valid:
-          type: boolean
-          description: "A boolean indicating if the DCV request was successful."
-        request_orchestration_parameters:
-          allOf:
-          - $ref: '#/components/schemas/OrchestrationParameters'
-          nullable: true
-        actual_orchestration_parameters:
-          $ref: '#/components/schemas/OrchestrationParameters'
-        perspectives:
-          $ref: '#/components/schemas/PerspectiveResponsesDCV'
-        dcv_check_parameters:
-          $ref: '#/components/schemas/DcvCheckParameters'
-        trace_identifier:
-          $ref: '#/components/schemas/TraceIdentifier'
-        previous_attempt_results:
-          $ref: '#/components/schemas/PreviousAttemptResultsDCV'
-
     CAAParams:
       type: object
       required:  # List the required properties here
@@ -629,38 +600,58 @@ components:
           $ref: '#/components/schemas/CaaCheckParameters'
         trace_identifier:
           $ref: '#/components/schemas/TraceIdentifier'
-          
-    CAAResponse:
+
+    BaseMPICResponse:
       type: object
       required:
         - check_type
         - request_orchestration_parameters
         - actual_orchestration_parameters
+        - domain_or_ip_target
         - is_valid
         - perspectives
-        - caa_check_parameters
       properties:
         check_type:
           $ref: '#/components/schemas/CheckTypeCAA'
+        domain_or_ip_target:
+          $ref: '#/components/schemas/DomainOrIPTarget'
         is_valid:
           type: boolean
           description: "A boolean indicating if with both the CAA request and validation request was successful."
         request_orchestration_parameters:
           allOf:
-          - $ref: '#/components/schemas/OrchestrationParameters'
+            - $ref: '#/components/schemas/OrchestrationParameters'
           nullable: true
         actual_orchestration_parameters:
           $ref: '#/components/schemas/OrchestrationParameters'
         perspectives:
           $ref: '#/components/schemas/PerspectiveResponsesCAA'
-        caa_check_parameters:
-          allOf:
-          - $ref: '#/components/schemas/CaaCheckParameters'
-          nullable: true
         trace_identifier:
           $ref: '#/components/schemas/TraceIdentifier'
         previous_attempt_results:
           $ref: '#/components/schemas/PreviousAttemptResultsCAA'
+
+    DCVResponse:
+        allOf:
+            - $ref: '#/components/schemas/BaseMPICResponse'
+            - type: object
+              required:
+                - dcv_check_parameters
+              properties:
+                dcv_check_parameters:
+                  $ref: '#/components/schemas/DcvCheckParameters'
+
+    CAAResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseMPICResponse'
+        - type: object
+          required:
+            - caa_check_parameters
+          properties:
+            caa_check_parameters:
+              allOf:
+                - $ref: '#/components/schemas/CaaCheckParameters'
+              nullable: true
 
   securitySchemes:
     apiKeyAuth:
