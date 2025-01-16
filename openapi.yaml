@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 2.6.0
+  version: 2.7.0
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -131,7 +131,7 @@ components:
     DomainOrIPTarget:
       type: string
       example: "example.com"
-      description: "The FQDN (no trailing .) or public IP for which control is being validated."
+      description: "The FQDN (no trailing .) or public IP for which control is being validated. Interpreted as a wildcard domain if path begins with '*.'"
     
     DcvCheckParameters:
       type: object
@@ -162,7 +162,7 @@ components:
       properties:
         certificate_type:
           type: string
-          enum: ['tls-server', 'tls-server:wildcard', 's-mime'] # doc: https://swagger.io/docs/specification/data-models/enums/
+          enum: ['tls-server', 's-mime'] # doc: https://swagger.io/docs/specification/data-models/enums/
           description: "Specifies the type of certificate the CA will be signing for the applicant as it pertains to parsing CAA records."
         caa_domains:
           type: array
@@ -267,8 +267,9 @@ components:
               description: "The DNS record type to be queried."
             require_exact_match:
               type: boolean
-              example: false
-              description: "Whether or not the challenge_value must be identical to the observed challenge in the DNS record. If false, the challenge_value must be a substring of the observed challenge. Defaults to true."
+              example: true
+              default: false
+              description: "Whether or not the challenge_value must be identical to the observed challenge in the DNS record. If false, the challenge_value must be a substring of the observed challenge. Defaults to false."
 
     DNSChangeValidationDetails:
       allOf:
