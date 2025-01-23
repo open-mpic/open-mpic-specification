@@ -389,7 +389,7 @@ components:
     #      example: 'challenge_token'
     #      description: "The expected value to be observed inside the acmeIdentifier extension of #the self-signed certificate presented during the TLS handshake. The value will be #checked by stripping leading or trailing whitespace from both the extension value and #the expected value and then performing an equality check on the two strings."
 
-    BaseOrchestrationParameters:
+    OrchestrationParameters:
       type: object
       properties:
         perspective_count:
@@ -400,26 +400,10 @@ components:
           type: integer
           example: 5
           description: "The number of network perspectives that must successfully complete the the validation methods specified. As long as this value is greater than 2, the API will enforce that successful network perspectives must be spread across two Regional Internet Registry service regions (so long as there is a perspective used in at least two different Regional Internet Registry service regions). A quorum count of 0 instructs the API to operate in a monitoring only mode and always return success = true even if no vantage points succeed. In general 0 <= quorum count <= perspectives-count."
-
-    RequestOrchestrationParameters:
-      allOf:
-        - $ref: '#/components/schemas/BaseOrchestrationParameters'
-        - type: object
-          properties:
-            max_attempts:
-              type: integer
-              example: 3
-              description: "The number of times MPIC should be attempted before returning a failure. If the number of attempts is exceeded, the API will return a failure response. An implementation may choose to retry with the same or different perspectives each time. It is recommended implementations cap the number of distinct sets of perspectives that will ever validate a particular identifier to avoid adversaries retrying many times in the interest of getting favorable perspective sets."
-
-    EffectiveOrchestrationParameters:
-      allOf:
-        - $ref: '#/components/schemas/BaseOrchestrationParameters'
-        - type: object
-          properties:
-            attempt_count:
-              type: integer
-              example: 2
-              description: "The number of times MPIC has been retried before either completing successfully or reaching the maximum number of allowed attempts."
+        attempt_count:
+          type: integer
+          example: 3
+          description: "The number of times validation or CAA checks has been retried to get the result of a single API POST request. An implementation may choose to retry with the same or different perspectives each time. It is recommended implementations cap the number of distinct sets of perspectives that will ever validate a particular identifier to avoid adversaries retrying many times in the interest of getting favorable perspective sets."
 
     PerspectiveResponsesDCV:
       type: array
@@ -459,11 +443,11 @@ components:
                 - $ref: '#/components/schemas/HTTPMethodCheckResponseDetails'
                 nullable: true
               acme_dns_01:
-                allOf: 
+                allOf:
                 - $ref: '#/components/schemas/DNSMethodCheckResponseDetails'
                 nullable: true
               website_change_v2:
-                allOf: 
+                allOf:
                 - $ref: '#/components/schemas/HTTPMethodCheckResponseDetails'
                 nullable: true
               dns_change:
@@ -595,7 +579,7 @@ components:
         domain_or_ip_target:
           $ref: '#/components/schemas/DomainOrIPTarget'
         orchestration_parameters:
-          $ref: '#/components/schemas/RequestOrchestrationParameters'
+          $ref: '#/components/schemas/OrchestrationParameters'
         dcv_check_parameters:
           $ref: '#/components/schemas/DcvCheckParameters'
         trace_identifier:
@@ -609,10 +593,10 @@ components:
       properties:
         check_type:
           $ref: '#/components/schemas/CheckTypeCAA'
-        domain_or_ip_target: 
+        domain_or_ip_target:
           $ref: '#/components/schemas/DomainOrIPTarget'
         orchestration_parameters:
-          $ref: '#/components/schemas/RequestOrchestrationParameters'
+          $ref: '#/components/schemas/OrchestrationParameters'
         caa_check_parameters:
           $ref: '#/components/schemas/CaaCheckParameters'
         trace_identifier:
@@ -637,10 +621,10 @@ components:
           description: "A boolean indicating if with both the CAA request and validation request was successful."
         request_orchestration_parameters:
           allOf:
-            - $ref: '#/components/schemas/RequestOrchestrationParameters'
+            - $ref: '#/components/schemas/OrchestrationParameters'
           nullable: true
         actual_orchestration_parameters:
-          $ref: '#/components/schemas/EffectiveOrchestrationParameters'
+          $ref: '#/components/schemas/OrchestrationParameters'
         perspectives:
           $ref: '#/components/schemas/PerspectiveResponsesCAA'
         trace_identifier:
