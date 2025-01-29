@@ -111,8 +111,6 @@ paths:
                 trace_identifier: ac2d0392-8699-4037-a0e0-0a6db1ff8b89
         '400':
           description: Bad Request
-        '403':
-          description: Unauthorized
         '500':
           description: Internal Server Error
 
@@ -669,11 +667,3 @@ components:
               allOf:
                 - $ref: '#/components/schemas/CaaCheckParameters'
               nullable: true
-
-  securitySchemes:
-    apiKeyAuth:
-      type: apiKey
-      in: header
-      name: x-api-key
-security:
-  - apiKeyAuth: []
