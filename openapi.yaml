@@ -263,11 +263,6 @@ components:
               type: string
               example: 'TXT'
               description: "The DNS record type to be queried."
-            require_exact_match:
-              type: boolean
-              example: true
-              default: false
-              description: "Whether or not the challenge_value must be identical to the observed challenge in the DNS record. If false, the challenge_value must be a substring of the observed challenge. Defaults to false."
 
     DNSChangeValidationDetails:
       allOf:
@@ -279,6 +274,11 @@ components:
             dns_record_type:
               type: string
               enum: ['CNAME', 'TXT', 'CAA']
+            require_exact_match:
+              type: boolean
+              example: true
+              default: false
+              description: "Whether or not the challenge_value must be identical to the observed challenge in the DNS record. If false, the challenge_value must be a substring of the observed challenge. Defaults to false."
 
     AcmeDns01ValidationDetails:
       allOf:
