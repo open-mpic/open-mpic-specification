@@ -435,7 +435,7 @@ components:
           perspective_code:
             type: string
             example: "us-east-2"
-            description: "A unique identifier for the perspective used"
+            description: "A unique identifier for the perspective used."
           check_passed:
             type: boolean
             example: True
