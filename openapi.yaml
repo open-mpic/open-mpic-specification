@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 2.8.0
+  version: 2.9.0
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
