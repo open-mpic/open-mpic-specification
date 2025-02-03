@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 2.8.0
+  version: 2.9.0
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -263,11 +263,6 @@ components:
               type: string
               example: 'TXT'
               description: "The DNS record type to be queried."
-            require_exact_match:
-              type: boolean
-              example: true
-              default: false
-              description: "Whether or not the challenge_value must be identical to the observed challenge in the DNS record. If false, the challenge_value must be a substring of the observed challenge. Defaults to false."
 
     DNSChangeValidationDetails:
       allOf:
@@ -279,6 +274,11 @@ components:
             dns_record_type:
               type: string
               enum: ['CNAME', 'TXT', 'CAA']
+            require_exact_match:
+              type: boolean
+              example: true
+              default: false
+              description: "Whether or not the challenge_value must be identical to the observed challenge in the DNS record. If false, the challenge_value must be a substring of the observed challenge. Defaults to false."
 
     AcmeDns01ValidationDetails:
       allOf:
@@ -432,10 +432,10 @@ components:
           - details
           - errors
         properties:
-          perspective:
+          perspective_code:
             type: string
             example: "us-east-2"
-            description: "A unique identifier for the perspective used"
+            description: "A unique identifier for the perspective used."
           check_passed:
             type: boolean
             example: True
@@ -523,10 +523,10 @@ components:
           - check_type
           - details
         properties:
-          perspective:
+          perspective_code:
             type: string
             example: "arin.us-east-2"
-            description: "A unique identifier for the perspective used in the format \"rir.location\""
+            description: "A unique identifier for the perspective used."
           check_passed:
             type: boolean
             example: True
