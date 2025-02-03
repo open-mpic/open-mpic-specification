@@ -432,7 +432,7 @@ components:
           - details
           - errors
         properties:
-          perspective:
+          perspective_code:
             type: string
             example: "us-east-2"
             description: "A unique identifier for the perspective used"
@@ -523,10 +523,10 @@ components:
           - check_type
           - details
         properties:
-          perspective:
+          perspective_code:
             type: string
             example: "arin.us-east-2"
-            description: "A unique identifier for the perspective used in the format \"rir.location\""
+            description: "A unique identifier for the perspective used."
           check_passed:
             type: boolean
             example: True
