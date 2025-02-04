@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 3.0.0
+  version: 2.10.0
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -139,7 +139,7 @@ components:
           oneOf:
             - $ref: '#/components/schemas/AcmeHTTP01ValidationDetails'
             - $ref: '#/components/schemas/AcmeDNS01ValidationDetails'
-            - $ref: '#/components/schemas/WebsiteChangeV2ValidationDetails'
+            - $ref: '#/components/schemas/WebsiteChangeValidationDetails'
             - $ref: '#/components/schemas/DNSChangeValidationDetails'
             - $ref: '#/components/schemas/ContactPhoneValidationDetails'
             - $ref: '#/components/schemas/ContactEmailValidationDetails'
@@ -149,7 +149,7 @@ components:
             mapping:
               acme-http-01: '#/components/schemas/AcmeHTTP01ValidationDetails'
               acme-dns-01: '#/components/schemas/AcmeDNS01ValidationDetails'
-              website-change-v2: '#/components/schemas/WebsiteChangeV2ValidationDetails'
+              website-change: '#/components/schemas/WebsiteChangeValidationDetails'
               dns-change: '#/components/schemas/DNSChangeValidationDetails'
               contact-phone: '#/components/schemas/ContactPhoneValidationDetails'
               contact-email: '#/components/schemas/ContactEmailValidationDetails'
@@ -174,7 +174,7 @@ components:
       description: "The type of domain control validation the network perspectives should use."
       type: string
       enum: ['acme-dns-01', 'acme-http-01', 'contact-email', 'contact-phone',
-             'dns-change', 'ip-lookup', 'tls-using-alpn', 'website-change-v2'] # doc: https://swagger.io/docs/specification/data-models/enums/
+             'dns-change', 'ip-address', 'website-change'] # doc: https://swagger.io/docs/specification/data-models/enums/
 
     TraceIdentifier:
       type: string
@@ -196,7 +196,7 @@ components:
         validation_method:
           $ref: '#/components/schemas/ValidationMethod'
 
-    WebsiteChangeV2ValidationDetails:
+    WebsiteChangeValidationDetails:
       allOf:
         - $ref: '#/components/schemas/BaseValidationDetails'
         - type: object
