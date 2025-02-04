@@ -203,7 +203,7 @@ components:
             http_token_path:
               type: string
               example: 'challenge.html'
-              description: "The path to check for the challenge token. The full URL used to retrieve the expected value is constructed via the syntax \"http://\" + identifier + \"/.well-known/pki-validation/\" + path."
+              description: "The path to check for the challenge token. The full URL used to retrieve the expected value is constructed via the syntax (url scheme) + \"://\" + identifier + \"/.well-known/pki-validation/\" + path."
             challenge_value:
               type: string
               example: 'challenge_token'
