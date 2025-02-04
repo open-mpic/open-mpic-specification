@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 2.9.0
+  version: 3.0.0
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -132,28 +132,24 @@ components:
       description: "The FQDN (no trailing .) or public IP for which control is being validated. Interpreted as a wildcard domain if path begins with '*.'"
 
     DcvCheckParameters:
-      type: object
-      properties:
-        validation_details:
-          description: "The validation method(s) to be performed at the various network perspectives."
-          oneOf:
-            - $ref: '#/components/schemas/AcmeHttp01ValidationDetails'
-            - $ref: '#/components/schemas/AcmeDns01ValidationDetails'
-            - $ref: '#/components/schemas/WebsiteChangeV2ValidationDetails'
-            - $ref: '#/components/schemas/DNSChangeValidationDetails'
-            - $ref: '#/components/schemas/ContactPhoneValidationDetails'
-            - $ref: '#/components/schemas/ContactEmailValidationDetails'
-            - $ref: '#/components/schemas/ReverseAddressLookupValidationDetails'
-          discriminator:
-            propertyName: validation_method
-            mapping:
-              acme-http-01: '#/components/schemas/AcmeHttp01ValidationDetails'
-              acme-dns-01: '#/components/schemas/AcmeDns01ValidationDetails'
-              website-change-v2: '#/components/schemas/WebsiteChangeV2ValidationDetails'
-              dns-change: '#/components/schemas/DNSChangeValidationDetails'
-              contact-phone: '#/components/schemas/ContactPhoneValidationDetails'
-              contact-email: '#/components/schemas/ContactEmailValidationDetails'
-              reverse-address-lookup: '#/components/schemas/ReverseAddressLookupValidationDetails'
+      oneOf:
+        - $ref: '#/components/schemas/AcmeHTTP01ValidationParameters'
+        - $ref: '#/components/schemas/AcmeDNS01ValidationParameters'
+        - $ref: '#/components/schemas/WebsiteChangeValidationParameters'
+        - $ref: '#/components/schemas/DNSChangeValidationParameters'
+        - $ref: '#/components/schemas/ContactPhoneValidationParameters'
+        - $ref: '#/components/schemas/ContactEmailValidationParameters'
+        - $ref: '#/components/schemas/IpAddressValidationParameters'
+      discriminator:
+        propertyName: validation_method
+        mapping:
+          acme-http-01: '#/components/schemas/AcmeHTTP01ValidationParameters'
+          acme-dns-01: '#/components/schemas/AcmeDNS01ValidationParameters'
+          website-change: '#/components/schemas/WebsiteChangeValidationParameters'
+          dns-change: '#/components/schemas/DNSChangeValidationParameters'
+          contact-phone: '#/components/schemas/ContactPhoneValidationParameters'
+          contact-email: '#/components/schemas/ContactEmailValidationParameters'
+          ip-address: '#/components/schemas/IpAddressValidationParameters'
 
     CaaCheckParameters:
       type: object
@@ -166,7 +162,7 @@ components:
           type: array
           example:
             - "letsencrypt.org"
-          description: "Valid CAA domain names in issue or issuewild (e.g., CAA 0 issue \"letsencrypt.org\")tags that permit issuance by the calling CA. If left empty, the default configured CAA domain name(s) are used."
+          description: "Valid CAA domain names in issue or issuewild (e.g., CAA 0 issue \"letsencrypt.org\") tags that permit issuance by the calling CA. If left empty, the default configured CAA domain name(s) are used."
           items:
             type: string
 
@@ -174,21 +170,21 @@ components:
       description: "The type of domain control validation the network perspectives should use."
       type: string
       enum: ['acme-dns-01', 'acme-http-01', 'contact-email', 'contact-phone',
-             'dns-change', 'ip-lookup', 'tls-using-alpn', 'website-change-v2'] # doc: https://swagger.io/docs/specification/data-models/enums/
+             'dns-change', 'ip-address', 'website-change'] # doc: https://swagger.io/docs/specification/data-models/enums/
 
     TraceIdentifier:
       type: string
       example: 'ac2d0392-8699-4037-a0e0-0a6db1ff8b89'
       description: "A optional unique identifier for the request. This identifier is used to track the request through the system and can be used to correlate the request with other systems."
 
-    HttpHeaders:
+    HTTPHeaders:
       type: object
       example: {"User-Agent": "myCA.example.com"}
       description: "An optional dictionary of HTTP headers to be sent with the request."
       additionalProperties:
         type: string
 
-    BaseValidationDetails:
+    BaseValidationParameters:
       type: object
       required:
         - validation_method
@@ -196,9 +192,9 @@ components:
         validation_method:
           $ref: '#/components/schemas/ValidationMethod'
 
-    WebsiteChangeV2ValidationDetails:
+    WebsiteChangeValidationParameters:
       allOf:
-        - $ref: '#/components/schemas/BaseValidationDetails'
+        - $ref: '#/components/schemas/BaseValidationParameters'
         - type: object
           required:
             - http_token_path
@@ -207,7 +203,7 @@ components:
             http_token_path:
               type: string
               example: 'challenge.html'
-              description: "The path to check for the challenge token. The full URL used to retrieve the expected value is constructed via the syntax \"http://\" + identifier + \"/.well-known/pki-validation/\" + path."
+              description: "The path to check for the challenge token. The full URL used to retrieve the expected value is constructed via the syntax (url scheme) + \"://\" + identifier + \"/.well-known/pki-validation/\" + path."
             challenge_value:
               type: string
               example: 'challenge_token'
@@ -221,11 +217,11 @@ components:
               type: string
               enum: ['http', 'https']
             http_headers:
-              $ref: '#/components/schemas/HttpHeaders'
+              $ref: '#/components/schemas/HTTPHeaders'
 
-    AcmeHttp01ValidationDetails:
+    AcmeHTTP01ValidationParameters:
       allOf:
-        - $ref: '#/components/schemas/BaseValidationDetails'
+        - $ref: '#/components/schemas/BaseValidationParameters'
         - type: object
           required:
             - token
@@ -240,33 +236,28 @@ components:
               example: 'key_authorization'
               description: "The key authorization to be sent in the HTTP GET body as described in RFC 8555 Section 8.1. The value will be checked by stripping trailing whitespace from the response and then performing an equality check on the two strings."
             http_headers:
-              $ref: '#/components/schemas/HttpHeaders'
+              $ref: '#/components/schemas/HTTPHeaders'
 
-    BaseDNSChangeValidationDetails:
+    BaseDNSChangeValidationParameters:
       allOf:
-        - $ref: '#/components/schemas/BaseValidationDetails'
+        - $ref: '#/components/schemas/BaseValidationParameters'
         - type: object
           required:
             - dns_record_type
             - challenge_value
-            - dns_name_prefix
           properties:
             challenge_value:
               type: string
               example: 'challenge_token'
               description: "The expected value to be observed as a response to this DNS challenge. The challenge will be completed successfully if the challenge_value is observed within one of the RDATA fields associated with this DNS record type at the FQDN."
-            dns_name_prefix:
-              type: string
-              example: '_dcv'
-              description: "The domain label prefix where to look for the challenge_value. If label is not an empty string, the FQDN which will be queried for the challenge_value is constructed via the syntax label + \".\" + domain_or_ip_target + \".\". If label is an empty string the query is sent directly to domain_or_ip_target + \".\". domain_or_ip_target MUST be a domain to use this method."
             dns_record_type:
               type: string
               example: 'TXT'
               description: "The DNS record type to be queried."
 
-    DNSChangeValidationDetails:
+    DNSChangeValidationParameters:
       allOf:
-        - $ref: '#/components/schemas/BaseDNSChangeValidationDetails'
+        - $ref: '#/components/schemas/BaseDNSChangeValidationParameters'
         - type: object
           required:
             - dns_record_type
@@ -274,15 +265,20 @@ components:
             dns_record_type:
               type: string
               enum: ['CNAME', 'TXT', 'CAA']
+            dns_name_prefix:
+              type: string
+              example: '_dcv'
+              description: "The domain label prefix where to look for the challenge_value. If label is not an empty string, the FQDN which will be queried for the challenge_value is constructed via the syntax label + \".\" + domain_or_ip_target + \".\". If label is an empty string the query is sent directly to domain_or_ip_target + \".\". domain_or_ip_target MUST be a domain to use this method."
+              nullable: true
             require_exact_match:
               type: boolean
               example: true
               default: false
               description: "Whether or not the challenge_value must be identical to the observed challenge in the DNS record. If false, the challenge_value must be a substring of the observed challenge. Defaults to false."
 
-    AcmeDns01ValidationDetails:
+    AcmeDNS01ValidationParameters:
       allOf:
-        - $ref: '#/components/schemas/BaseValidationDetails'
+        - $ref: '#/components/schemas/BaseValidationParameters'
         - type: object
           required:
             - key_authorization
@@ -291,27 +287,27 @@ components:
               type: string
               description: "The SHA-256 digest [FIPS180-4] of the key authorization as defined in RFC 8555 Section 8.4. The challenge will be completed successfully if the expected-challenge is observed byte-for-byte identical in one of the RDATA fields found with the query for _acme-challenge.{domain_or_ip_target} IN TXT. To use this method, domain_or_ip_target MUST be a domain."
 
-    ContactEmailValidationDetails:
+    ContactEmailValidationParameters:
       allOf:
-        - $ref: '#/components/schemas/BaseDNSChangeValidationDetails'
+        - $ref: '#/components/schemas/BaseDNSChangeValidationParameters'
         - type: object
           properties:
             dns_record_type:
               type: string
               enum: ['CAA', 'TXT']
 
-    ContactPhoneValidationDetails:
+    ContactPhoneValidationParameters:
       allOf:
-        - $ref: '#/components/schemas/BaseDNSChangeValidationDetails'
+        - $ref: '#/components/schemas/BaseDNSChangeValidationParameters'
         - type: object
           properties:
             dns_record_type:
               type: string
               enum: ['CAA', 'TXT']
 
-    ReverseAddressLookupValidationDetails:
+    IpAddressValidationParameters:
       allOf:
-        - $ref: '#/components/schemas/BaseDNSChangeValidationDetails'
+        - $ref: '#/components/schemas/BaseDNSChangeValidationParameters'
         - type: object
           properties:
             dns_record_type:
@@ -320,7 +316,7 @@ components:
 
     HTTPMethodCheckResponseDetails:
       type: object
-      description: "Details related to the http-based validation methods from a perspective."
+      description: "Details relevant to an HTTP-based DCV check result from a perspective."
       required:
         - response_history
         - response_url
@@ -356,6 +352,7 @@ components:
           description: "The IP address used to communicate with the domain_or_ip_target."
 
     DNSMethodCheckResponseDetails:
+      description: "Details relevant to a DNS-based DCV check result from a perspective."
       type: object
       required:
         - records_seen
@@ -419,89 +416,64 @@ components:
               example: 2
               description: "The number of times MPIC has been retried before either completing successfully or reaching the maximum number of allowed attempts."
 
+    BaseCheckResponse:
+      type: object
+      required:
+        - check_passed
+        - timestamp_ns
+      properties:
+        check_passed:
+          type: boolean
+          example: True
+          description: "Indicator for whether the check was successful at this perspective."
+        timestamp_ns:
+          type: integer
+          format: int64
+          description: "The epoch timestamp in nanoseconds of the check."
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              error_type:
+                type: string
+                example: "validation:acme-dns-01"
+                description: "The type of the error in the format \"type:subtype\". If associated with a validation method the error type should read \"validation:affected-method\"."
+              error_message:
+                type: string
+                example: "Observed token 1234 instead of expected token 4567 at _acme-challenge.example.com in record type TXT."
+                description: "An error message explaining the observed error."
+
+    CheckResponseDCV:
+      allOf:
+        - $ref: '#/components/schemas/BaseCheckResponse'
+        - type: object
+          required:
+            - check_type
+            - details
+          properties:
+            check_type:
+              $ref: '#/components/schemas/CheckTypeDCV'
+            details:
+              oneOf:
+                - $ref: '#/components/schemas/HTTPMethodCheckResponseDetails'
+                - $ref: '#/components/schemas/DNSMethodCheckResponseDetails'
+
     PerspectiveResponsesDCV:
       type: array
       description: "Detailed responses from the result of the validation attempt at each perspective."
       items:
         type: object
         required:
-          - perspective
-          - check_passed
-          - timestamp_ns
-          - check_type
-          - details
-          - errors
+          - perspective_code
+          - check_response
         properties:
           perspective_code:
             type: string
             example: "us-east-2"
             description: "A unique identifier for the perspective used."
-          check_passed:
-            type: boolean
-            example: True
-            description: "Whether or not domain control validation was successful at this perspective."
-          timestamp_ns:
-            type: integer
-            format: int64
-            description: "The epoch timestamp in nanoseconds of the check."
-          check_type:
-            $ref: '#/components/schemas/CheckTypeDCV'
-          attestation:
-            type: object
-            description: "Information (e.g., digital signatures) from a remote perspective that allows for the response generated to be verified."
-          details:
-            type: object
-            properties:
-              acme_http_01:
-                allOf:
-                - $ref: '#/components/schemas/HTTPMethodCheckResponseDetails'
-                nullable: true
-              acme_dns_01:
-                allOf:
-                - $ref: '#/components/schemas/DNSMethodCheckResponseDetails'
-                nullable: true
-              website_change_v2:
-                allOf:
-                - $ref: '#/components/schemas/HTTPMethodCheckResponseDetails'
-                nullable: true
-              dns_change:
-                allOf:
-                - $ref: '#/components/schemas/DNSMethodCheckResponseDetails'
-                nullable: true
-              contact_phone_txt:
-                allOf:
-                - $ref: '#/components/schemas/DNSMethodCheckResponseDetails'
-                nullable: true
-              contact_phone_caa:
-                allOf:
-                - $ref: '#/components/schemas/DNSMethodCheckResponseDetails'
-                nullable: true
-              contact_email_txt:
-                allOf:
-                - $ref: '#/components/schemas/DNSMethodCheckResponseDetails'
-                nullable: true
-              contact_email_caa:
-                allOf:
-                - $ref: '#/components/schemas/DNSMethodCheckResponseDetails'
-                nullable: true
-              reverse_address_lookup:
-                allOf:
-                - $ref: '#/components/schemas/DNSMethodCheckResponseDetails'
-                nullable: true
-          errors:
-            type: array
-            items:
-              type: object
-              properties:
-                error_type:
-                  type: string
-                  example: "validation:acme-dns-01"
-                  description: "The type of the error in the format \"type:subtype\". If associated with a validation method the error type should read \"validation:affected-method\"."
-                error_message:
-                  type: string
-                  example: "Observed token 1234 instead of expected token 4567 at _acme-challenge.example.com in record type TXT."
-                  description: "An error message explaining the observed error."
-            nullable: true
+          check_response:
+            $ref: '#/components/schemas/CheckResponseDCV'
 
     PreviousAttemptResultsDCV:
       type: array
@@ -510,69 +482,51 @@ components:
         $ref: '#/components/schemas/PerspectiveResponsesDCV'
       nullable: true
 
+    CheckResponseCAA:
+      allOf:
+        - $ref: '#/components/schemas/BaseCheckResponse'
+        - type: object
+          required:
+          - check_type
+          - details
+          properties:
+            check_type:
+              $ref: '#/components/schemas/CheckTypeCAA'
+            details:
+              type: object
+              required:
+              - caa_record_present
+              - found_at
+              - records_seen
+              description: "Details relating to the CAA lookup at this perspective. Implementations may choose to expose additional details or omit details depending on the result."
+              properties:
+                caa_record_present:
+                  description: "Indicates if a record was found when resolving CAA records for an identifier."
+                  type: boolean
+                found_at:
+                  description: "The domain where CAA records were resolved when performing CAA lookup for identifier. (CAA records may be hosted at parent zone of identifier.)"
+                  type: string
+                  nullable: true
+                records_seen:
+                  description: "A list of the records in the RRset retrieved for the CAA lookup. Empty list is acceptable if there are no RRsets"
+                  type: string
+                  nullable: true
+
     PerspectiveResponsesCAA:
       type: array
       description: "Detailed responses from the result of the CAA check at each perspective."
       items:
         type: object
         required:
-          - perspective
-          - check_passed
-          - errors
-          - timestamp_ns
-          - check_type
-          - details
+          - perspective_code
+          - check_response
         properties:
           perspective_code:
             type: string
             example: "arin.us-east-2"
             description: "A unique identifier for the perspective used."
-          check_passed:
-            type: boolean
-            example: True
-            description: "Indicator for whether the CAA check was successful at this perspective."
-          check_type:
-            $ref: '#/components/schemas/CheckTypeCAA'
-          timestamp_ns:
-            type: integer
-            format: int64
-            description: "The epoch timestamp in nanoseconds of the check."
-          attestation:
-            type: object
-            description: "Information (e.g., digital signatures) from a remote perspective that allows for the response generated to be verified."
-          details:
-            type: object
-            required:
-              - caa_record_present
-              - found_at
-              - records_seen
-            description: "Details relating to the CAA lookup at this perspective. Implementations may choose to expose additional details or omit details depending on the result."
-            properties:
-              caa_record_present:
-                description: "Indicates if a record was found when resolving CAA records for an identifier."
-                type: boolean
-              found_at:
-                description: "The domain where CAA records were resolved when performing CAA lookup for identifier. (CAA records may be hosted at parent zone of identifier.)"
-                type: string
-                nullable: true
-              records_seen:
-                description: "A list of the records in the RRset retrieved for the CAA lookup. Empty list is acceptable if there are no RRsets"
-                type: string
-                nullable: true
-          errors:
-            type: array
-            items:
-              type: object
-              properties:
-                error_type:
-                  type: string
-                  example: "caa:timeout"
-                  description: "The type of the error in the format \"type:subtype\"."
-                error_message:
-                  type: string
-                  example: "Experienced a timeout when attempting to query example.com in CAA."
-                  description: "An error message explaining the observed error."
-            nullable: true
+          check_response:
+            $ref: '#/components/schemas/CheckResponseCAA'
 
     PreviousAttemptResultsCAA:
       type: array
@@ -581,40 +535,45 @@ components:
         $ref: '#/components/schemas/PerspectiveResponsesCAA'
       nullable: true
 
-    DCVParams:
+    BaseParams:
       type: object
       required:
-        - check_type
         - domain_or_ip_target
-        - dcv_check_parameters
       properties:
-        check_type:
-          $ref: '#/components/schemas/CheckTypeDCV'
         domain_or_ip_target:
           $ref: '#/components/schemas/DomainOrIPTarget'
         orchestration_parameters:
           $ref: '#/components/schemas/RequestOrchestrationParameters'
-        dcv_check_parameters:
-          $ref: '#/components/schemas/DcvCheckParameters'
         trace_identifier:
           $ref: '#/components/schemas/TraceIdentifier'
 
+    DCVParams:
+      allOf:
+        - $ref: '#/components/schemas/BaseParams'
+        - type: object
+          required:
+          - check_type
+          - dcv_check_parameters
+          properties:
+            check_type:
+              $ref: '#/components/schemas/CheckTypeDCV'
+            dcv_check_parameters:
+              $ref: '#/components/schemas/DcvCheckParameters'
+
+
+
     CAAParams:
-      type: object
-      required:  # List the required properties here
-        - domain_or_ip_target
-        - check_type
-      properties:
-        check_type:
-          $ref: '#/components/schemas/CheckTypeCAA'
-        domain_or_ip_target:
-          $ref: '#/components/schemas/DomainOrIPTarget'
-        orchestration_parameters:
-          $ref: '#/components/schemas/RequestOrchestrationParameters'
-        caa_check_parameters:
-          $ref: '#/components/schemas/CaaCheckParameters'
-        trace_identifier:
-          $ref: '#/components/schemas/TraceIdentifier'
+      allOf:
+        - $ref: '#/components/schemas/BaseParams'
+        - type: object
+          required:
+          - check_type
+          - caa_check_parameters
+          properties:
+            check_type:
+              $ref: '#/components/schemas/CheckTypeCAA'
+            caa_check_parameters:
+              $ref: '#/components/schemas/CaaCheckParameters'
 
     BaseMPICResponse:
       type: object
@@ -624,7 +583,6 @@ components:
         - actual_orchestration_parameters
         - domain_or_ip_target
         - is_valid
-        - perspectives
       properties:
         check_type:
           $ref: '#/components/schemas/CheckTypeCAA'
@@ -632,19 +590,15 @@ components:
           $ref: '#/components/schemas/DomainOrIPTarget'
         is_valid:
           type: boolean
-          description: "A boolean indicating if with both the CAA request and validation request was successful."
+          description: "A boolean indicating if corroboration was successful."
         request_orchestration_parameters:
           allOf:
             - $ref: '#/components/schemas/RequestOrchestrationParameters'
           nullable: true
         actual_orchestration_parameters:
           $ref: '#/components/schemas/EffectiveOrchestrationParameters'
-        perspectives:
-          $ref: '#/components/schemas/PerspectiveResponsesCAA'
         trace_identifier:
           $ref: '#/components/schemas/TraceIdentifier'
-        previous_attempt_results:
-          $ref: '#/components/schemas/PreviousAttemptResultsCAA'
 
     DCVResponse:
         allOf:
@@ -652,9 +606,14 @@ components:
             - type: object
               required:
                 - dcv_check_parameters
+                - perspectives
               properties:
                 dcv_check_parameters:
                   $ref: '#/components/schemas/DcvCheckParameters'
+                perspectives:
+                  $ref: '#/components/schemas/PerspectiveResponsesDCV'
+                previous_attempt_results:
+                  $ref: '#/components/schemas/PreviousAttemptResultsDCV'
 
     CAAResponse:
       allOf:
@@ -662,8 +621,13 @@ components:
         - type: object
           required:
             - caa_check_parameters
+            - perspectives
           properties:
             caa_check_parameters:
               allOf:
                 - $ref: '#/components/schemas/CaaCheckParameters'
               nullable: true
+            perspectives:
+              $ref: '#/components/schemas/PerspectiveResponsesCAA'
+            previous_attempt_results:
+              $ref: '#/components/schemas/PreviousAttemptResultsCAA'
