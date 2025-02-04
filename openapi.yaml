@@ -132,28 +132,24 @@ components:
       description: "The FQDN (no trailing .) or public IP for which control is being validated. Interpreted as a wildcard domain if path begins with '*.'"
 
     DcvCheckParameters:
-      type: object
-      properties:
-        validation_details:
-          description: "The validation method(s) to be performed at the various network perspectives."
-          oneOf:
-            - $ref: '#/components/schemas/AcmeHTTP01ValidationDetails'
-            - $ref: '#/components/schemas/AcmeDNS01ValidationDetails'
-            - $ref: '#/components/schemas/WebsiteChangeValidationDetails'
-            - $ref: '#/components/schemas/DNSChangeValidationDetails'
-            - $ref: '#/components/schemas/ContactPhoneValidationDetails'
-            - $ref: '#/components/schemas/ContactEmailValidationDetails'
-            - $ref: '#/components/schemas/IpAddressValidationDetails'
-          discriminator:
-            propertyName: validation_method
-            mapping:
-              acme-http-01: '#/components/schemas/AcmeHTTP01ValidationDetails'
-              acme-dns-01: '#/components/schemas/AcmeDNS01ValidationDetails'
-              website-change: '#/components/schemas/WebsiteChangeValidationDetails'
-              dns-change: '#/components/schemas/DNSChangeValidationDetails'
-              contact-phone: '#/components/schemas/ContactPhoneValidationDetails'
-              contact-email: '#/components/schemas/ContactEmailValidationDetails'
-              ip-address: '#/components/schemas/IpAddressValidationDetails'
+      oneOf:
+        - $ref: '#/components/schemas/AcmeHTTP01ValidationParameters'
+        - $ref: '#/components/schemas/AcmeDNS01ValidationParameters'
+        - $ref: '#/components/schemas/WebsiteChangeValidationParameters'
+        - $ref: '#/components/schemas/DNSChangeValidationParameters'
+        - $ref: '#/components/schemas/ContactPhoneValidationParameters'
+        - $ref: '#/components/schemas/ContactEmailValidationParameters'
+        - $ref: '#/components/schemas/IpAddressValidationParameters'
+      discriminator:
+        propertyName: validation_method
+        mapping:
+          acme-http-01: '#/components/schemas/AcmeHTTP01ValidationParameters'
+          acme-dns-01: '#/components/schemas/AcmeDNS01ValidationParameters'
+          website-change: '#/components/schemas/WebsiteChangeValidationParameters'
+          dns-change: '#/components/schemas/DNSChangeValidationParameters'
+          contact-phone: '#/components/schemas/ContactPhoneValidationParameters'
+          contact-email: '#/components/schemas/ContactEmailValidationParameters'
+          ip-address: '#/components/schemas/IpAddressValidationParameters'
 
     CaaCheckParameters:
       type: object
@@ -166,7 +162,7 @@ components:
           type: array
           example:
             - "letsencrypt.org"
-          description: "Valid CAA domain names in issue or issuewild (e.g., CAA 0 issue \"letsencrypt.org\")tags that permit issuance by the calling CA. If left empty, the default configured CAA domain name(s) are used."
+          description: "Valid CAA domain names in issue or issuewild (e.g., CAA 0 issue \"letsencrypt.org\") tags that permit issuance by the calling CA. If left empty, the default configured CAA domain name(s) are used."
           items:
             type: string
 
@@ -188,7 +184,7 @@ components:
       additionalProperties:
         type: string
 
-    BaseValidationDetails:
+    BaseValidationParameters:
       type: object
       required:
         - validation_method
@@ -196,9 +192,9 @@ components:
         validation_method:
           $ref: '#/components/schemas/ValidationMethod'
 
-    WebsiteChangeValidationDetails:
+    WebsiteChangeValidationParameters:
       allOf:
-        - $ref: '#/components/schemas/BaseValidationDetails'
+        - $ref: '#/components/schemas/BaseValidationParameters'
         - type: object
           required:
             - http_token_path
@@ -223,9 +219,9 @@ components:
             http_headers:
               $ref: '#/components/schemas/HTTPHeaders'
 
-    AcmeHTTP01ValidationDetails:
+    AcmeHTTP01ValidationParameters:
       allOf:
-        - $ref: '#/components/schemas/BaseValidationDetails'
+        - $ref: '#/components/schemas/BaseValidationParameters'
         - type: object
           required:
             - token
@@ -242,9 +238,9 @@ components:
             http_headers:
               $ref: '#/components/schemas/HTTPHeaders'
 
-    BaseDNSChangeValidationDetails:
+    BaseDNSChangeValidationParameters:
       allOf:
-        - $ref: '#/components/schemas/BaseValidationDetails'
+        - $ref: '#/components/schemas/BaseValidationParameters'
         - type: object
           required:
             - dns_record_type
@@ -264,9 +260,9 @@ components:
               example: 'TXT'
               description: "The DNS record type to be queried."
 
-    DNSChangeValidationDetails:
+    DNSChangeValidationParameters:
       allOf:
-        - $ref: '#/components/schemas/BaseDNSChangeValidationDetails'
+        - $ref: '#/components/schemas/BaseDNSChangeValidationParameters'
         - type: object
           required:
             - dns_record_type
@@ -280,9 +276,9 @@ components:
               default: false
               description: "Whether or not the challenge_value must be identical to the observed challenge in the DNS record. If false, the challenge_value must be a substring of the observed challenge. Defaults to false."
 
-    AcmeDNS01ValidationDetails:
+    AcmeDNS01ValidationParameters:
       allOf:
-        - $ref: '#/components/schemas/BaseValidationDetails'
+        - $ref: '#/components/schemas/BaseValidationParameters'
         - type: object
           required:
             - key_authorization
@@ -291,27 +287,27 @@ components:
               type: string
               description: "The SHA-256 digest [FIPS180-4] of the key authorization as defined in RFC 8555 Section 8.4. The challenge will be completed successfully if the expected-challenge is observed byte-for-byte identical in one of the RDATA fields found with the query for _acme-challenge.{domain_or_ip_target} IN TXT. To use this method, domain_or_ip_target MUST be a domain."
 
-    ContactEmailValidationDetails:
+    ContactEmailValidationParameters:
       allOf:
-        - $ref: '#/components/schemas/BaseDNSChangeValidationDetails'
+        - $ref: '#/components/schemas/BaseDNSChangeValidationParameters'
         - type: object
           properties:
             dns_record_type:
               type: string
               enum: ['CAA', 'TXT']
 
-    ContactPhoneValidationDetails:
+    ContactPhoneValidationParameters:
       allOf:
-        - $ref: '#/components/schemas/BaseDNSChangeValidationDetails'
+        - $ref: '#/components/schemas/BaseDNSChangeValidationParameters'
         - type: object
           properties:
             dns_record_type:
               type: string
               enum: ['CAA', 'TXT']
 
-    IpAddressValidationDetails:
+    IpAddressValidationParameters:
       allOf:
-        - $ref: '#/components/schemas/BaseDNSChangeValidationDetails'
+        - $ref: '#/components/schemas/BaseDNSChangeValidationParameters'
         - type: object
           properties:
             dns_record_type:
@@ -563,6 +559,8 @@ components:
               $ref: '#/components/schemas/CheckTypeDCV'
             dcv_check_parameters:
               $ref: '#/components/schemas/DcvCheckParameters'
+
+
 
     CAAParams:
       allOf:
