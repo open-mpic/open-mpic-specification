@@ -245,16 +245,11 @@ components:
           required:
             - dns_record_type
             - challenge_value
-            - dns_name_prefix
           properties:
             challenge_value:
               type: string
               example: 'challenge_token'
               description: "The expected value to be observed as a response to this DNS challenge. The challenge will be completed successfully if the challenge_value is observed within one of the RDATA fields associated with this DNS record type at the FQDN."
-            dns_name_prefix:
-              type: string
-              example: '_dcv'
-              description: "The domain label prefix where to look for the challenge_value. If label is not an empty string, the FQDN which will be queried for the challenge_value is constructed via the syntax label + \".\" + domain_or_ip_target + \".\". If label is an empty string the query is sent directly to domain_or_ip_target + \".\". domain_or_ip_target MUST be a domain to use this method."
             dns_record_type:
               type: string
               example: 'TXT'
@@ -270,6 +265,11 @@ components:
             dns_record_type:
               type: string
               enum: ['CNAME', 'TXT', 'CAA']
+            dns_name_prefix:
+              type: string
+              example: '_dcv'
+              description: "The domain label prefix where to look for the challenge_value. If label is not an empty string, the FQDN which will be queried for the challenge_value is constructed via the syntax label + \".\" + domain_or_ip_target + \".\". If label is an empty string the query is sent directly to domain_or_ip_target + \".\". domain_or_ip_target MUST be a domain to use this method."
+              nullable: true
             require_exact_match:
               type: boolean
               example: true
