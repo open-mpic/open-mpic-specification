@@ -147,8 +147,10 @@ components:
           acme-dns-01: '#/components/schemas/AcmeDNS01ValidationParameters'
           website-change: '#/components/schemas/WebsiteChangeValidationParameters'
           dns-change: '#/components/schemas/DNSChangeValidationParameters'
-          contact-phone: '#/components/schemas/ContactPhoneValidationParameters'
-          contact-email: '#/components/schemas/ContactEmailValidationParameters'
+          contact-phone-txt: '#/components/schemas/ContactPhoneValidationParameters'
+          contact-phone-caa: '#/components/schemas/ContactPhoneValidationParameters'
+          contact-email-txt: '#/components/schemas/ContactEmailValidationParameters'
+          contact-email-caa: '#/components/schemas/ContactEmailValidationParameters'
           ip-address: '#/components/schemas/IpAddressValidationParameters'
 
     CaaCheckParameters:
@@ -243,17 +245,12 @@ components:
         - $ref: '#/components/schemas/BaseValidationParameters'
         - type: object
           required:
-            - dns_record_type
             - challenge_value
           properties:
             challenge_value:
               type: string
               example: 'challenge_token'
               description: "The expected value to be observed as a response to this DNS challenge. The challenge will be completed successfully if the challenge_value is observed within one of the RDATA fields associated with this DNS record type at the FQDN."
-            dns_record_type:
-              type: string
-              example: 'TXT'
-              description: "The DNS record type to be queried."
 
     DNSChangeValidationParameters:
       allOf:
@@ -265,6 +262,7 @@ components:
             dns_record_type:
               type: string
               enum: ['CNAME', 'TXT', 'CAA']
+              description: "The DNS record type to be queried."
             dns_name_prefix:
               type: string
               example: '_dcv'
@@ -290,29 +288,22 @@ components:
     ContactEmailValidationParameters:
       allOf:
         - $ref: '#/components/schemas/BaseDNSChangeValidationParameters'
-        - type: object
-          properties:
-            dns_record_type:
-              type: string
-              enum: ['CAA', 'TXT']
 
     ContactPhoneValidationParameters:
       allOf:
         - $ref: '#/components/schemas/BaseDNSChangeValidationParameters'
-        - type: object
-          properties:
-            dns_record_type:
-              type: string
-              enum: ['CAA', 'TXT']
 
     IpAddressValidationParameters:
       allOf:
         - $ref: '#/components/schemas/BaseDNSChangeValidationParameters'
         - type: object
+          required:
+            - dns_record_type
           properties:
             dns_record_type:
               type: string
               enum: ['A', 'AAAA']
+              description: "The DNS record type to be queried."
 
     HTTPMethodCheckResponseDetails:
       type: object
