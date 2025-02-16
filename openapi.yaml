@@ -135,6 +135,7 @@ components:
       oneOf:
         - $ref: '#/components/schemas/AcmeHTTP01ValidationParameters'
         - $ref: '#/components/schemas/AcmeDNS01ValidationParameters'
+        - $ref: '#/components/schemas/AcmeTLSALPN01ValidationParameters'
         - $ref: '#/components/schemas/WebsiteChangeValidationParameters'
         - $ref: '#/components/schemas/DNSChangeValidationParameters'
         - $ref: '#/components/schemas/ContactPhoneValidationParameters'
@@ -145,6 +146,7 @@ components:
         mapping:
           acme-http-01: '#/components/schemas/AcmeHTTP01ValidationParameters'
           acme-dns-01: '#/components/schemas/AcmeDNS01ValidationParameters'
+          acme-tls-alpn-01: '#/components/schemas/AcmeTLSALPN01ValidationParameters'
           website-change: '#/components/schemas/WebsiteChangeValidationParameters'
           dns-change: '#/components/schemas/DNSChangeValidationParameters'
           contact-phone-txt: '#/components/schemas/ContactPhoneValidationParameters'
