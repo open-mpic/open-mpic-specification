@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 3.0.0
+  version: 3.1.0
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -135,6 +135,7 @@ components:
       oneOf:
         - $ref: '#/components/schemas/AcmeHTTP01ValidationParameters'
         - $ref: '#/components/schemas/AcmeDNS01ValidationParameters'
+        - $ref: '#/components/schemas/AcmeTLSALPN01ValidationParameters'
         - $ref: '#/components/schemas/WebsiteChangeValidationParameters'
         - $ref: '#/components/schemas/DNSChangeValidationParameters'
         - $ref: '#/components/schemas/ContactPhoneValidationParameters'
@@ -145,6 +146,7 @@ components:
         mapping:
           acme-http-01: '#/components/schemas/AcmeHTTP01ValidationParameters'
           acme-dns-01: '#/components/schemas/AcmeDNS01ValidationParameters'
+          acme-tls-alpn-01: '#/components/schemas/AcmeTLSALPN01ValidationParameters'
           website-change: '#/components/schemas/WebsiteChangeValidationParameters'
           dns-change: '#/components/schemas/DNSChangeValidationParameters'
           contact-phone-txt: '#/components/schemas/ContactPhoneValidationParameters'
@@ -281,9 +283,21 @@ components:
           required:
             - key_authorization
           properties:
-            key_authorization:
+            key_authorization_hash:
               type: string
-              description: "The SHA-256 digest [FIPS180-4] of the key authorization as defined in RFC 8555 Section 8.4. The challenge will be completed successfully if the expected-challenge is observed byte-for-byte identical in one of the RDATA fields found with the query for _acme-challenge.{domain_or_ip_target} IN TXT. To use this method, domain_or_ip_target MUST be a domain."
+              description: "The SHA-256 digest [FIPS180-4] of the key authorization as defined in RFC 8555 Section 8.1. The challenge will be completed successfully if the expected-challenge is observed byte-for-byte identical in one of the RDATA fields found with the query for _acme-challenge.{domain_or_ip_target} IN TXT. To use this method, domain_or_ip_target MUST be a domain."
+
+    AcmeTLSALPN01ValidationParameters:
+      allOf:
+        - $ref: '#/components/schemas/BaseValidationParameters'
+        - type: object
+          required:
+            - key_authorization
+          properties:
+            key_authorization_hash:
+              type: string
+              description: "The SHA-256 digest [FIPS180-4] of the key authorization as defined in RFC 8555 Section 8.1."
+
 
     ContactEmailValidationParameters:
       allOf:
