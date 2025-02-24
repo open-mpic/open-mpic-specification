@@ -285,7 +285,7 @@ components:
           properties:
             key_authorization_hash:
               type: string
-              description: "The SHA-256 digest [FIPS180-4] of the key authorization as defined in RFC 8555 Section 8.4. The challenge will be completed successfully if the expected-challenge is observed byte-for-byte identical in one of the RDATA fields found with the query for _acme-challenge.{domain_or_ip_target} IN TXT. To use this method, domain_or_ip_target MUST be a domain."
+              description: "The SHA-256 digest [FIPS180-4] of the key authorization as defined in RFC 8555 Section 8.1. The challenge will be completed successfully if the expected-challenge is observed byte-for-byte identical in one of the RDATA fields found with the query for _acme-challenge.{domain_or_ip_target} IN TXT. To use this method, domain_or_ip_target MUST be a domain."
 
     AcmeTLSALPN01ValidationParameters:
       allOf:
@@ -296,7 +296,7 @@ components:
           properties:
             key_authorization_hash:
               type: string
-              description: "The SHA-256 digest [FIPS180-4] of the key authorization as defined in RFC 8555 Section 8.4."
+              description: "The SHA-256 digest [FIPS180-4] of the key authorization as defined in RFC 8555 Section 8.1."
 
 
     ContactEmailValidationParameters:
