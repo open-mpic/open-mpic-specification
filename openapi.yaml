@@ -281,7 +281,7 @@ components:
         - $ref: '#/components/schemas/BaseValidationParameters'
         - type: object
           required:
-            - key_authorization
+            - key_authorization_hash
           properties:
             key_authorization_hash:
               type: string
@@ -292,7 +292,7 @@ components:
         - $ref: '#/components/schemas/BaseValidationParameters'
         - type: object
           required:
-            - key_authorization
+            - key_authorization_hash
           properties:
             key_authorization_hash:
               type: string
