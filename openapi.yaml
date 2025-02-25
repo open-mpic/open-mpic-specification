@@ -368,6 +368,8 @@ components:
         records_seen:
           type: array
           description: "A list of the records in the RRset retrieved for the DNS query. Empty list is acceptable if there are no RRsets"
+          items:
+            type: object
         response_code:
           type: integer
           description: "The DNS response code (RCODE) resulting from the query."
