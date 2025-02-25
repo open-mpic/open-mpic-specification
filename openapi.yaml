@@ -380,17 +380,6 @@ components:
             type: string
             description: "The domain where the DNS records were resolved when performing the DNS lookup for the identifier. (DNS records may be hosted at parent zone of identifier.)"
 
-    # TLS-ALPN is getting nixed from the standard until there is implementation to accompany it.
-    #TLSALPNValidation:
-    #  type: object
-    #  required:
-    #  - expected-challenge
-    #  properties:
-    #    expected-challenge:
-    #      type: string
-    #      example: 'challenge_token'
-    #      description: "The expected value to be observed inside the acmeIdentifier extension of #the self-signed certificate presented during the TLS handshake. The value will be #checked by stripping leading or trailing whitespace from both the extension value and #the expected value and then performing an equality check on the two strings."
-
     BaseOrchestrationParameters:
       type: object
       properties:
