@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 3.1.0
+  version: 3.2.0
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -51,10 +51,12 @@ paths:
                   attempt_count: 1
                 is_valid: true
                 domain_or_ip_target: example.com
+                mpic_completed: true
                 check_type: caa
                 perspectives:
                   - perspective_code: us-east-2
                     check_passed: true
+                    check_completed: true
                     errors: null
                     timestamp_ns: 1725822089205545500
                     check_type: caa
@@ -64,6 +66,7 @@ paths:
                       response: null
                   - perspective_code: eu-west-2
                     check_passed: true
+                    check_completed: true
                     errors: null
                     timestamp_ns: 1725822089670721500
                     check_type: caa
@@ -73,6 +76,7 @@ paths:
                       response: null
                   - perspective_code: ap-northeast-2
                     check_passed: true
+                    check_completed: true
                     errors: null
                     timestamp_ns: 1725822089672918800
                     check_type: caa
@@ -82,6 +86,7 @@ paths:
                       response: null
                   - perspective_code: ap-southeast-1
                     check_passed: true
+                    check_completed: true
                     errors: null
                     timestamp_ns: 1725822089693880600
                     check_type: caa
@@ -91,6 +96,7 @@ paths:
                       response: null
                   - perspective_code: eu-central-1
                     check_passed: true
+                    check_completed: true
                     errors: null
                     timestamp_ns: 1725822089754537000
                     check_type: caa
@@ -100,6 +106,7 @@ paths:
                       response: null
                   - perspective_code: us-west-2
                     check_passed: true
+                    check_completed: true
                     errors: null
                     timestamp_ns: 1725822089912938200
                     check_type: caa
@@ -415,6 +422,7 @@ components:
     BaseCheckResponse:
       type: object
       required:
+        - check_completed
         - check_passed
         - timestamp_ns
       properties:
@@ -426,6 +434,9 @@ components:
           type: integer
           format: int64
           description: "The epoch timestamp in nanoseconds of the check."
+        check_completed:
+          type: boolean
+          description: "A boolean indicating if the check was completed without errors. If false, the check_passed field may need to be interpreted as not valid."
         errors:
           type: array
           items:
@@ -519,7 +530,7 @@ components:
         properties:
           perspective_code:
             type: string
-            example: "arin.us-east-2"
+            example: "us-east-2"
             description: "A unique identifier for the perspective used."
           check_response:
             $ref: '#/components/schemas/CheckResponseCAA'
@@ -556,8 +567,6 @@ components:
             dcv_check_parameters:
               $ref: '#/components/schemas/DcvCheckParameters'
 
-
-
     CAAParams:
       allOf:
         - $ref: '#/components/schemas/BaseParams'
@@ -578,6 +587,7 @@ components:
         - actual_orchestration_parameters
         - domain_or_ip_target
         - is_valid
+        - mpic_completed
       properties:
         check_type:
           $ref: '#/components/schemas/CheckTypeCAA'
@@ -594,6 +604,9 @@ components:
           $ref: '#/components/schemas/EffectiveOrchestrationParameters'
         trace_identifier:
           $ref: '#/components/schemas/TraceIdentifier'
+        mpic_completed:
+          type: boolean
+          description: "A boolean indicating if the MPIC process completed without errors."
 
     DCVResponse:
         allOf:
