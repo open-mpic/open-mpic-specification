@@ -376,16 +376,20 @@ components:
           type: array
           description: "A list of the records in the RRset retrieved for the DNS query. Empty list is acceptable if there are no RRsets"
           items:
-            type: object
+            type: string
+          nullable: true
         response_code:
           type: integer
           description: "The DNS response code (RCODE) resulting from the query."
+          nullable: true
         ad_flag:
           type: boolean
           description: "Whether or not the recursive resolver set the Authenticated Data (AD) flag in its DNS response."
+          nullable: true
         found_at:
-            type: string
-            description: "The domain where the DNS records were resolved when performing the DNS lookup for the identifier. (DNS records may be hosted at parent zone of identifier.)"
+          type: string
+          description: "The domain where the DNS records were resolved when performing the DNS lookup for the identifier. (DNS records may be hosted at parent zone of identifier.)"
+          nullable: true
 
     BaseOrchestrationParameters:
       type: object
