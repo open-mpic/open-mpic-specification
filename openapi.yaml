@@ -582,15 +582,12 @@ components:
     BaseMPICResponse:
       type: object
       required:
-        - check_type
         - request_orchestration_parameters
         - actual_orchestration_parameters
         - domain_or_ip_target
         - is_valid
         - mpic_completed
       properties:
-        check_type:
-          $ref: '#/components/schemas/CheckTypeCAA'
         domain_or_ip_target:
           $ref: '#/components/schemas/DomainOrIPTarget'
         is_valid:
@@ -613,9 +610,12 @@ components:
             - $ref: '#/components/schemas/BaseMPICResponse'
             - type: object
               required:
+                - check_type
                 - dcv_check_parameters
                 - perspectives
               properties:
+                check_type:
+                  $ref: '#/components/schemas/CheckTypeDCV'
                 dcv_check_parameters:
                   $ref: '#/components/schemas/DcvCheckParameters'
                 perspectives:
@@ -628,9 +628,12 @@ components:
         - $ref: '#/components/schemas/BaseMPICResponse'
         - type: object
           required:
+            - check_type
             - caa_check_parameters
             - perspectives
           properties:
+            check_type:
+                  $ref: '#/components/schemas/CheckTypeCAA'
             caa_check_parameters:
               allOf:
                 - $ref: '#/components/schemas/CaaCheckParameters'
