@@ -194,6 +194,7 @@ components:
       description: "An optional dictionary of HTTP headers to be sent with the request."
       additionalProperties:
         type: string
+      nullable: true
 
     BaseValidationParameters:
       type: object
