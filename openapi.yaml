@@ -337,6 +337,7 @@ components:
         - response_page
       properties:
         response_history:
+          nullable: true
           description: "An array of all redirects that were given before the final response was found. It can be empty if there are no redirects. Otherwise it contains a list of objects with status codes and the URLs that returned those status codes in order starting with the original challenge URL."
           type: array
           items:
@@ -352,17 +353,23 @@ components:
                 type: string
                 description: "The URL that returned this status code."
         response_url:
+          nullable: true
           description: "The URL that returned the final response. This is equal to the original challenge URL if there are no redirects."
           type: string
         response_status_code:
+          nullable: true
           type: integer
           description: "The status code returned by the final URL."
         response_page:
+          nullable: true
           type: string
           description: "The first 100 bytes of the page returned at the final URL. If the page is less than 100 bytes, the entire page content is returned."
         resolved_ip:
+          nullable: true
           type: string
           description: "The IP address used to communicate with the domain_or_ip_target."
+        validation_method:
+          $ref: '#/components/schemas/ValidationMethod'
 
     DNSMethodCheckResponseDetails:
       description: "Details relevant to a DNS-based DCV check result from a perspective."
