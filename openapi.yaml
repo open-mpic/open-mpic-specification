@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 3.2.0
+  version: 3.3.0
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -161,6 +161,7 @@ components:
           contact-email-txt: '#/components/schemas/ContactEmailValidationParameters'
           contact-email-caa: '#/components/schemas/ContactEmailValidationParameters'
           ip-address: '#/components/schemas/IpAddressValidationParameters'
+          reverse-address-lookup: '#/components/schemas/BaseDNSChangeValidationParameters'
 
     CaaCheckParameters:
       type: object
@@ -305,7 +306,6 @@ components:
             key_authorization_hash:
               type: string
               description: "The SHA-256 digest [FIPS180-4] of the key authorization as defined in RFC 8555 Section 8.1."
-
 
     ContactEmailValidationParameters:
       allOf:
