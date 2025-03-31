@@ -409,7 +409,7 @@ components:
         quorum_count:
           type: integer
           example: 5
-          description: "The number of network perspectives that must successfully complete the the validation methods specified. As long as this value is greater than 2, the API will enforce that successful network perspectives must be spread across two Regional Internet Registry service regions (so long as there is a perspective used in at least two different Regional Internet Registry service regions). A quorum count of 0 instructs the API to operate in a monitoring only mode and always return success = true even if no vantage points succeed. In general 0 <= quorum count <= perspectives-count."
+          description: "The number of network perspectives that must successfully complete the validation methods specified. As long as this value is greater than 2, the API will enforce that successful network perspectives must be spread across two Regional Internet Registry service regions (so long as there is a perspective used in at least two different Regional Internet Registry service regions). A quorum count of 0 instructs the API to operate in a monitoring only mode and always return success = true even if no vantage points succeed. In general 0 <= quorum count <= perspectives-count."
 
     RequestOrchestrationParameters:
       allOf:
