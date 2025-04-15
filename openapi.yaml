@@ -225,10 +225,12 @@ components:
               type: string
               example: '^\w*TOKENVAL\w*$'
               description: "An optional regex string which must have a match in the returned webpage contents for the challenge to be successful. This is checked in addition to ensuring the token is contained in the webpage."
+              nullable: true
             url_scheme:
               description: "HTTP (port 80) or HTTPS (port 443). If not specified, the protocol is assumed to be HTTP."
               type: string
               enum: ['http', 'https']
+              nullable: true
             http_headers:
               $ref: '#/components/schemas/HTTPHeaders'
 
