@@ -386,7 +386,7 @@ components:
       required:
         - common_name
       properties:
-        found_at:
+        common_name:
             type: string
             description: "The common name of the cert observed at the server."
 
