@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 3.3.1
+  version: 3.4.0
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -401,6 +401,17 @@ components:
           description: "The domain where the DNS records were resolved when performing the DNS lookup for the identifier. (DNS records may be hosted at parent zone of identifier.)"
           nullable: true
 
+    TLSALPNMethodCheckResponseDetails:
+      description: "Details relevant to a TLS-ALPN check."
+      type: object
+      required:
+        - common_name
+      properties:
+        common_name:
+            type: string
+            description: "The common name of the cert observed at the server."
+
+
     BaseOrchestrationParameters:
       type: object
       properties:
@@ -479,6 +490,7 @@ components:
               oneOf:
                 - $ref: '#/components/schemas/HTTPMethodCheckResponseDetails'
                 - $ref: '#/components/schemas/DNSMethodCheckResponseDetails'
+                - $ref: '#/components/schemas/TLSALPNMethodCheckResponseDetails'
 
     PerspectiveResponsesDCV:
       type: array
