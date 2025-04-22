@@ -380,6 +380,17 @@ components:
             type: string
             description: "The domain where the DNS records were resolved when performing the DNS lookup for the identifier. (DNS records may be hosted at parent zone of identifier.)"
 
+    TLSALPNMethodCheckResponseDetails:
+      description: "Details relevant to a TLS-ALPN check."
+      type: object
+      required:
+        - common_name
+      properties:
+        found_at:
+            type: string
+            description: "The common name of the cert observed at the server."
+
+
     BaseOrchestrationParameters:
       type: object
       properties:
@@ -454,6 +465,7 @@ components:
               oneOf:
                 - $ref: '#/components/schemas/HTTPMethodCheckResponseDetails'
                 - $ref: '#/components/schemas/DNSMethodCheckResponseDetails'
+                - $ref: '#/components/schemas/TLSALPNMethodCheckResponseDetails'
 
     PerspectiveResponsesDCV:
       type: array
