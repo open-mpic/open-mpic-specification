@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 3.4.0
+  version: 3.4.1
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -399,6 +399,12 @@ components:
         found_at:
           type: string
           description: "The domain where the DNS records were resolved when performing the DNS lookup for the identifier. (DNS records may be hosted at parent zone of identifier.)"
+          nullable: true
+        cname_chain:
+          type: array
+          items:
+            type: string
+          description: "Any CNAMEs that were followed to obtain the final DNS lookup. May be an empty list if no CNAMEs were found. The last domain in the list is the domain that contained the final record. Not applicable if the challenge record type is CNAME."
           nullable: true
 
     TLSALPNMethodCheckResponseDetails:
