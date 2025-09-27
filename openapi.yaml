@@ -181,7 +181,7 @@ components:
           type: boolean
           example: false
           default: false
-          description: "If true, a failure to complete the CAA lookup (DNS resolution failure, specifically a DNS resolution timeout or SERVFAIL) will be treated as if no CAA records were found (that is, as permission to issue). If false, a failure to complete the CAA lookup will result in a failed check. Defaults to False. Use with great caution! This is intended to accommodate a carve-out in the CA/Browser Forum Baseline Requirements for CAA checking that allows CAA lookup failures to be treated as permission to issue in certain circumstances, but verifying that those circumstances hold true is left to the CA (in other words, the MPIC client)."
+          description: "If true, a failure to complete the CAA lookup (DNS resolution failure, specifically a DNS resolution timeout or SERVFAIL) will be treated as if no CAA records were found (that is, as permission to issue). If false, a failure to complete the CAA lookup will result in a failed check. Defaults to False. Use with great caution! This is intended to accommodate a carve-out in the CA/Browser Forum Baseline Requirements for CAA checking that allows CAA lookup failures to be treated as permission to issue in certain, narrow circumstances. Because this option weakens a security check, it must be used with great caution, and the Issuing Certificate Authority (CA), which utilizes the MPIC client, is entirely responsible for both enabling this feature and validating that the specific circumstances of the DNS failure justify overriding the standard security requirement."
 
     ValidationMethod:
       description: "The type of domain control validation the network perspectives should use."
