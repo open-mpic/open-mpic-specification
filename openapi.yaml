@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 3.6.0
+  version: 3.7.0
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -33,6 +33,14 @@ paths:
               check_type: caa
               domain_or_ip_target: example.com
               trace_identifier: ac2d0392-8699-4037-a0e0-0a6db1ff8b89
+              orchestration_parameters:
+                perspective_count: 6
+                quorum_count: 4
+                max_attempts: 3
+              caa_check_parameters:
+                certificate_type: tls-server
+                caa_domains:
+                  - letsencrypt.org
         required: true
       responses:
         '200':
@@ -44,7 +52,10 @@ paths:
                 - $ref: '#/components/schemas/CAAResponse'
                 - $ref: '#/components/schemas/DCVResponse'
               example:
-                request_orchestration_parameters: null
+                request_orchestration_parameters:
+                  perspective_count: 6
+                  quorum_count: 4
+                  max_attempts: 3
                 actual_orchestration_parameters:
                   perspective_count: 6
                   quorum_count: 4
@@ -429,7 +440,7 @@ components:
         perspective_count:
           type: integer
           example: 6
-          description: "The number of vantage points to use for this request. Allows the implementing API endpoint flexibility in picking vantage points so long as vantage points are picked from at least two different Regional Internet Registry service regions if possible. Vantage point selection by the implementing server MUST be deterministic for a particular \"domain\" value such that requests with the same domain value to the same API endpoint always result in the same vantage point usage (presuming the API endpoint was not reconfigured between requests). Implementations SHOULD also make vantage point selection non-predictable (e.g., using a secret keyed cryptographic hash) so that an outside entity without access to the internal configuration of the API endpoint cannot predict which vantage points will be used for a specified domain. This property CANNOT be specified with the \"perspectives\" array that forces use of a particular set of perspectives."
+          description: "The number of vantage points to use for this request. Allows the implementing API endpoint flexibility in picking vantage points so long as vantage points are picked from at least two different Regional Internet Registry service regions if possible. Vantage point selection by the implementing server MUST be deterministic for a particular \"domain\" value such that requests with the same domain value to the same API endpoint always result in the same vantage point usage (presuming the API endpoint was not reconfigured between requests). Implementations SHOULD also make vantage point selection non-predictable (e.g., using a secret keyed cryptographic hash) so that an outside entity without access to the internal configuration of the API endpoint cannot predict which vantage points will be used for a specified domain."
         quorum_count:
           type: integer
           example: 5
@@ -444,6 +455,12 @@ components:
               type: integer
               example: 3
               description: "The number of times MPIC should be attempted before returning a failure. If the number of attempts is exceeded, the API will return a failure response. An implementation may choose to retry with the same or different perspectives each time. It is recommended implementations cap the number of distinct sets of perspectives that will ever validate a particular identifier to avoid adversaries retrying many times in the interest of getting favorable perspective sets."
+              nullable: true
+            cohort_for_single_attempt:
+              type: integer
+              example: 2
+              description: "The specific cohort (indicating ordinal number; that is, 1 for first, 2 for second, and so forth) of perspectives to use for a single-attempt corroboration. Only valid in MPIC implementations that group available perspectives into disjoint (non-overlapping) sets or \"cohorts,\" with each cohort being a valid set of perspectives to use for an  MPIC check, based on parameters such as perspective_count. Must be within the number of valid perspective \"cohorts\" that would be created from available perspectives as part of MPIC coordination. Intended for MPIC client implementations that wish to perform custom orchestration of MPIC checks against multiple disjoint sets of perspectives. If set, max_attempts will automatically be set to 1 for the MPIC operation. Defaults to None."
+              nullable: true
 
     EffectiveOrchestrationParameters:
       allOf:
