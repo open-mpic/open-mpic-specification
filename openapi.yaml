@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 3.7.0
+  version: 3.8.0
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -156,6 +156,7 @@ components:
         - $ref: '#/components/schemas/AcmeTLSALPN01ValidationParameters'
         - $ref: '#/components/schemas/WebsiteChangeValidationParameters'
         - $ref: '#/components/schemas/DNSChangeValidationParameters'
+        - $ref: '#/components/schemas/DNSPersistentValidationParameters'
         - $ref: '#/components/schemas/ContactPhoneValidationParameters'
         - $ref: '#/components/schemas/ContactEmailValidationParameters'
         - $ref: '#/components/schemas/IpAddressValidationParameters'
@@ -167,6 +168,7 @@ components:
           acme-tls-alpn-01: '#/components/schemas/AcmeTLSALPN01ValidationParameters'
           website-change: '#/components/schemas/WebsiteChangeValidationParameters'
           dns-change: '#/components/schemas/DNSChangeValidationParameters'
+          dns-persistent: '#/components/schemas/DNSPersistentValidationParameters'
           contact-phone-txt: '#/components/schemas/ContactPhoneValidationParameters'
           contact-phone-caa: '#/components/schemas/ContactPhoneValidationParameters'
           contact-email-txt: '#/components/schemas/ContactEmailValidationParameters'
@@ -302,6 +304,25 @@ components:
               example: true
               default: false
               description: "Whether or not the challenge_value must be identical to the observed challenge in the DNS record. If false, the challenge_value must be a substring of the observed challenge. Defaults to false."
+
+    DNSPersistentValidationParameters:
+      allOf:
+        - $ref: '#/components/schemas/BaseValidationParameters'
+        - type: object
+          required:
+            - issuer_domain_names
+            - expected_account_uri
+          properties:
+            issuer_domain_names:
+              type: array
+              example:
+                  - "ca.example.com"
+                  - "ca.example.org"
+              description: "The list of accepted issuer domains for the subscriber. If the observed issuer domain in the record contains any of these domains, that portion of the challenge is considered passed."
+            expected_account_uri:
+              type: string
+              example: "https://ca.example.com/acct/12345"
+              description: "The expected account URI for the subscriber. The challenge will be completed successfully if the expected account URI is observed as the value for the accounturi parameter in the TXT record at the target challenge domain."
 
     AcmeDNS01ValidationParameters:
       allOf:
