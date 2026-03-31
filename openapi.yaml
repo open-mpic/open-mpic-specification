@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 3.8.0
+  version: 3.9.0
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -249,6 +249,11 @@ components:
               type: string
               enum: ['http', 'https']
               nullable: true
+            require_exact_case:
+              type: boolean
+              example: true
+              default: true
+              description: "Whether or not the challenge_value must match the case of the observed token in the webpage. If false, the observed token can be a shuffled-case version of the challenge_value. Defaults to true."
             http_headers:
               $ref: '#/components/schemas/HTTPHeaders'
 
@@ -304,6 +309,11 @@ components:
               example: true
               default: false
               description: "Whether or not the challenge_value must be identical to the observed challenge in the DNS record. If false, the challenge_value must be a substring of the observed challenge. Defaults to false."
+            require_exact_case:
+              type: boolean
+              example: true
+              default: true
+              description: "Whether or not the challenge_value must match the case of the observed challenge in the DNS record. If false, the observed challenge can be a shuffled-case version of the challenge_value. Defaults to true."
 
     DNSPersistentValidationParameters:
       allOf:
