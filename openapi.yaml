@@ -253,7 +253,7 @@ components:
               type: boolean
               example: true
               default: true
-              description: "Whether or not the challenge_value must match the case of the observed token in the webpage. If false, the observed token can be a shuffled-case version of the challenge_value. Defaults to true."
+              description: "Controls how the challenge_value is compared against the retrieved webpage contents when checking that it is contained as a substring. If true, the comparison is case-sensitive: the challenge_value MUST appear with exactly the same characters and case. If false, the containment check is case-insensitive using ASCII case-folding for letters A–Z/a–z, while still requiring the same character sequence ignoring case. This flag does not affect how match_regex is evaluated. Defaults to true."
             http_headers:
               $ref: '#/components/schemas/HTTPHeaders'
 
