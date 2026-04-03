@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 3.8.0
+  version: 3.9.0
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -249,6 +249,11 @@ components:
               type: string
               enum: ['http', 'https']
               nullable: true
+            require_exact_case:
+              type: boolean
+              example: true
+              default: true
+              description: "Controls how the challenge_value is compared against the retrieved webpage contents when checking that it is contained as a substring. If true, the comparison is case-sensitive: the challenge_value MUST appear with exactly the same characters and case. If false, the containment check is case-insensitive using ASCII case-folding for letters A–Z/a–z, while still requiring the same character sequence ignoring case. This flag does not affect how match_regex is evaluated. Defaults to true."
             http_headers:
               $ref: '#/components/schemas/HTTPHeaders'
 
@@ -303,7 +308,12 @@ components:
               type: boolean
               example: true
               default: false
-              description: "Whether or not the challenge_value must be identical to the observed challenge in the DNS record. If false, the challenge_value must be a substring of the observed challenge. Defaults to false."
+              description: "Whether the observed DNS record value MUST be exactly equal to challenge_value, as opposed to only containing it as a substring. If true, the comparison is performed on the entire record value. If false, the challenge_value MAY appear anywhere as a substring of the record value. Case-sensitivity for both equality and substring comparisons is controlled exclusively by require_exact_case. Defaults to false."
+            require_exact_case:
+              type: boolean
+              example: true
+              default: true
+              description: "Whether string comparison between challenge_value and the observed DNS record value is case-sensitive. If true, ASCII letters MUST match exactly in case. If false, comparison is case-insensitive: both strings are normalized to the same case (e.g., converted to lowercase) before performing either equality or substring comparison. This flag applies both when require_exact_match is true (full-string comparison) and when it is false (substring comparison). Defaults to true."
 
     DNSPersistentValidationParameters:
       allOf:
