@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 3.9.0
+  version: 3.10.0
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -41,6 +41,10 @@ paths:
                 certificate_type: tls-server
                 caa_domains:
                   - letsencrypt.org
+                accounturi_values:
+                  - https://acme-v02.api.letsencrypt.org/acme/acct/12345
+                validation_methods:
+                  - dns-01
         required: true
       responses:
         '200':
@@ -190,6 +194,22 @@ components:
           description: "Valid CAA domain names in issue or issuewild (e.g., CAA 0 issue \"letsencrypt.org\") tags that permit issuance by the calling CA. If left empty, the default configured CAA domain name(s) are used."
           items:
             type: string
+        accounturi_values:
+          type: array
+          example:
+            - "https://acme-v02.api.letsencrypt.org/acme/acct/12345"
+          description: "Permissible accounturi values that identify the subscriber requesting the certificate and would permit issuance if seen in the accounturi field of an RFC8657 CAA extension. If multiple values are provided, if any one of them is seen in the accounturi field of the CAA record, issuance is permitted."
+          items:
+            type: string
+          nullable: true
+        validation_methods:
+          type: array
+          example:
+            - "dns-01"
+          description: "Permissible labels that identify the validation method used for this certificate request. These will be used in comparison with validationmethods parameters of RFC 8657 CAA extensions."
+          items:
+            type: string
+          nullable: true
         allow_lookup_failure:
           type: boolean
           example: false
@@ -602,6 +622,22 @@ components:
                 records_seen:
                   description: "A list of the records in the RRset retrieved for the CAA lookup. Empty list is acceptable if there are no RRsets"
                   type: string
+                  nullable: true
+                permissible_under_account_uri:
+                  type: array
+                  example:
+                    - "https://acme-v02.api.ca.example/acme/acct/12345"
+                  description: "accounturi values seen in RFC 8657 CAA extensions that would have permitted issuance had they been supplied in accounturi_values. Only set when the RFC 8657 accounturi and/or validationmethods parameters were the sole reason no CAA record permitted issuance; null in all other cases, including when the check passed."
+                  items:
+                    type: string
+                  nullable: true
+                permissible_under_validation_method:
+                  type: array
+                  example:
+                    - "dns-01"
+                  description: "Validation method labels seen in RFC 8657 CAA extensions that would have permitted issuance had they been supplied in validation_methods. Only set when the RFC 8657 accounturi and/or validationmethods parameters were the sole reason no CAA record permitted issuance; null in all other cases, including when the check passed."
+                  items:
+                    type: string
                   nullable: true
 
     PerspectiveResponsesCAA:
