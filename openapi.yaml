@@ -331,6 +331,7 @@ components:
               description: "The list of accepted issuer domains for the subscriber. If the observed issuer domain in the record contains any of these domains, that portion of the challenge is considered passed."
             expected_account_uri:
               type: string
+              format: uri
               example: "https://ca.example.com/acct/12345"
               description: "The expected account URI for the subscriber. The challenge will be completed successfully if the expected account URI is observed as the value for the accounturi parameter in the TXT record at the target challenge domain."
 
