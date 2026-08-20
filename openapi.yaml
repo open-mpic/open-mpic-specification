@@ -329,6 +329,8 @@ components:
                   - "ca.example.com"
                   - "ca.example.org"
               description: "The list of accepted issuer domains for the subscriber. If the observed issuer domain in the record contains any of these domains, that portion of the challenge is considered passed."
+              items:
+                type: string
             expected_account_uri:
               type: string
               example: "https://ca.example.com/acct/12345"
