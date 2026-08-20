@@ -601,7 +601,9 @@ components:
                   nullable: true
                 records_seen:
                   description: "A list of the records in the RRset retrieved for the CAA lookup. Empty list is acceptable if there are no RRsets"
-                  type: string
+                  type: array
+                  items:
+                    type: string
                   nullable: true
 
     PerspectiveResponsesCAA:
