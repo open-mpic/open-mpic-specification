@@ -523,6 +523,7 @@ components:
           description: "A boolean indicating if the check was completed without errors. If false, the check_passed field may need to be interpreted as not valid."
         errors:
           type: array
+          nullable: true
           items:
             type: object
             properties:
