@@ -615,6 +615,27 @@ components:
         $ref: '#/components/schemas/PerspectiveResponsesDCV'
       nullable: true
 
+    EvaluatedRecord:
+      description: "One record from the RRset retrieved for the check, with the outcome of its evaluation. Each record is evaluated on its own, so any parameters it carries stay together with the outcome they produced. Every record is evaluated, so outcomes do not depend on record order."
+      type: object
+      required:
+        - record
+        - evaluation
+      properties:
+        record:
+          description: "The record as retrieved: the presentation format of the resource record for CAA, or the RDATA with its character strings concatenated for TXT."
+          type: string
+          example: "0 issue \"ca.example.com; accounturi=https://ca.example.com/acct/12345; validationmethods=dns-01\""
+        evaluation:
+          description: "'satisfied': the record satisfied the check, permitting issuance or demonstrating control, and more than one record can. 'rejected': the record was considered and did not. 'not-applicable': the record takes no part in this decision, for example a Property Tag that does not govern the requested certificate type, or an issue Property superseded by issuewild (RFC 8659, Section 4.3)."
+          type: string
+          enum: ['satisfied', 'rejected', 'not-applicable']
+        detail:
+          description: "A short explanation, expected when the evaluation is 'rejected'. Intended to be displayed, not parsed; wording may differ between implementations."
+          type: string
+          nullable: true
+          example: "the accounturi parameter does not identify any of the accounts supplied in expected_account_uris"
+
     CheckResponseCAA:
       allOf:
         - $ref: '#/components/schemas/BaseCheckResponse'
@@ -641,8 +662,10 @@ components:
                   type: string
                   nullable: true
                 records_seen:
-                  description: "A list of the records in the RRset retrieved for the CAA lookup. Empty list is acceptable if there are no RRsets"
-                  type: string
+                  description: "The records in the RRset retrieved for the CAA lookup, each with the outcome of its evaluation. Empty list is acceptable if there are no RRsets."
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/EvaluatedRecord'
                   nullable: true
 
     PerspectiveResponsesCAA:
