@@ -41,10 +41,11 @@ paths:
                 certificate_type: tls-server
                 caa_domains:
                   - letsencrypt.org
-                accounturi_values:
+                expected_account_uris:
                   - https://ca.example.com/acct/12345
-                validation_methods:
-                  - dns-01
+                expected_validation_methods:
+                  - http-01
+                  - ca-tbr-19
         required: true
       responses:
         '200':
@@ -67,6 +68,7 @@ paths:
                 is_valid: true
                 domain_or_ip_target: example.com
                 mpic_completed: true
+                api_version: 3.10.0
                 check_type: caa
                 perspectives:
                   - perspective_code: us-east-2
@@ -75,6 +77,7 @@ paths:
                     errors: null
                     timestamp_ns: 1725822089205545500
                     check_type: caa
+                    api_version: 3.10.0
                     details:
                       caa_record_present: false
                       found_at: null
@@ -85,6 +88,7 @@ paths:
                     errors: null
                     timestamp_ns: 1725822089670721500
                     check_type: caa
+                    api_version: 3.10.0
                     details:
                       caa_record_present: false
                       found_at: null
@@ -95,6 +99,7 @@ paths:
                     errors: null
                     timestamp_ns: 1725822089672918800
                     check_type: caa
+                    api_version: 3.10.0
                     details:
                       caa_record_present: false
                       found_at: null
@@ -105,6 +110,7 @@ paths:
                     errors: null
                     timestamp_ns: 1725822089693880600
                     check_type: caa
+                    api_version: 3.10.0
                     details:
                       caa_record_present: false
                       found_at: null
@@ -115,6 +121,7 @@ paths:
                     errors: null
                     timestamp_ns: 1725822089754537000
                     check_type: caa
+                    api_version: 3.10.0
                     details:
                       caa_record_present: false
                       found_at: null
@@ -125,6 +132,7 @@ paths:
                     errors: null
                     timestamp_ns: 1725822089912938200
                     check_type: caa
+                    api_version: 3.10.0
                     details:
                       caa_record_present: false
                       found_at: null
@@ -197,18 +205,20 @@ components:
         expected_account_uris:
           type: array
           example:
-            - "https://acme-v02.api.letsencrypt.org/acme/acct/12345"
+            - "https://ca.example.com/acct/12345"
           description: "Permissible accounturi values that identify the subscriber requesting the certificate and would permit issuance if seen in the accounturi field of an RFC8657 CAA extension. If multiple values are provided, if any one of them is seen in the accounturi field of the CAA record, issuance is permitted."
           items:
             type: string
+            format: uri
           nullable: true
         expected_validation_methods:
           type: array
           example:
-            - "dns-01"
+            - "http-01"
+            - "ca-tbr-19"
           description: "Permissible labels that identify the validation method used for this certificate request. These will be used in comparison with validationmethods parameters of RFC 8657 CAA extensions."
           items:
-            type: string
+            $ref: '#/components/schemas/ValidationMethodRFC8657'
           nullable: true
         allow_lookup_failure:
           type: boolean
@@ -221,6 +231,12 @@ components:
       type: string
       enum: ['acme-dns-01', 'acme-http-01', 'acme-tls-alpn-01', 'contact-phone-txt', 'contact-phone-caa', 'contact-email-txt', 'contact-email-caa',
              'dns-change', 'ip-address', 'reverse-address-lookup', 'website-change'] # doc: https://swagger.io/docs/specification/data-models/enums/
+
+    ValidationMethodRFC8657:
+      description: "A validation method label as used in the validationmethods parameter of an RFC 8657 CAA extension. These labels are a different vocabulary from the ValidationMethod values used in DCV requests, e.g. the ACME DNS challenge is 'dns-01' here and 'acme-dns-01' there. The set of labels is open, so this is constrained only by the label syntax of RFC 8657."
+      type: string
+      pattern: '^[A-Za-z0-9-]+$'
+      example: "ca-tbr-19"
 
     TraceIdentifier:
       type: string
@@ -529,7 +545,12 @@ components:
         - check_completed
         - check_passed
         - timestamp_ns
+        - api_version
       properties:
+        api_version:
+          type: string
+          example: "3.10.0"
+          description: "The version of this API specification implemented by the perspective that produced this check response."
         check_passed:
           type: boolean
           example: True
@@ -623,22 +644,6 @@ components:
                   description: "A list of the records in the RRset retrieved for the CAA lookup. Empty list is acceptable if there are no RRsets"
                   type: string
                   nullable: true
-                permissible_under_account_uri:
-                  type: array
-                  example:
-                    - "https://acme-v02.api.ca.example/acme/acct/12345"
-                  description: "accounturi values seen in RFC 8657 CAA extensions that would have permitted issuance had they been supplied in accounturi_values. Only set when the RFC 8657 accounturi and/or validationmethods parameters were the sole reason no CAA record permitted issuance; null in all other cases, including when the check passed."
-                  items:
-                    type: string
-                  nullable: true
-                permissible_under_validation_method:
-                  type: array
-                  example:
-                    - "dns-01"
-                  description: "Validation method labels seen in RFC 8657 CAA extensions that would have permitted issuance had they been supplied in validation_methods. Only set when the RFC 8657 accounturi and/or validationmethods parameters were the sole reason no CAA record permitted issuance; null in all other cases, including when the check passed."
-                  items:
-                    type: string
-                  nullable: true
 
     PerspectiveResponsesCAA:
       type: array
@@ -708,7 +713,12 @@ components:
         - domain_or_ip_target
         - is_valid
         - mpic_completed
+        - api_version
       properties:
+        api_version:
+          type: string
+          example: "3.10.0"
+          description: "The version of this API specification implemented by the coordinator that produced this response."
         domain_or_ip_target:
           $ref: '#/components/schemas/DomainOrIPTarget'
         is_valid:
