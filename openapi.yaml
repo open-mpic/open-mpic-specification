@@ -134,9 +134,6 @@ paths:
 
 components:
   schemas:
-    CheckType:
-      type: string
-      enum: ['dcv', 'caa']
     CheckTypeDCV:
       type: string
       enum: ['dcv']
