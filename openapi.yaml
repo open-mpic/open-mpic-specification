@@ -243,6 +243,11 @@ components:
       example: 'ac2d0392-8699-4037-a0e0-0a6db1ff8b89'
       description: "A optional unique identifier for the request. This identifier is used to track the request through the system and can be used to correlate the request with other systems."
 
+    APIVersion:
+      type: string
+      example: '3.10.0'
+      description: "The version of this API specification implemented by the component that produced the containing object. Uses the same format as this document's info.version."
+
     HTTPHeaders:
       type: object
       example: {"User-Agent": "myCA.example.com"}
@@ -548,9 +553,9 @@ components:
         - api_version
       properties:
         api_version:
-          type: string
-          example: "3.10.0"
-          description: "The version of this API specification implemented by the perspective that produced this check response."
+          allOf:
+            - $ref: '#/components/schemas/APIVersion'
+          description: "The version of this API specification implemented by the perspective that produced this check response. The coordinator and the perspectives are normally deployed together, but a partial deployment failure can leave them at different versions."
         check_passed:
           type: boolean
           example: True
@@ -716,9 +721,9 @@ components:
         - api_version
       properties:
         api_version:
-          type: string
-          example: "3.10.0"
-          description: "The version of this API specification implemented by the coordinator that produced this response."
+          allOf:
+            - $ref: '#/components/schemas/APIVersion'
+          description: "The version of this API specification implemented by the coordinator that produced this response. Recorded in the body so that a retained result carries the version that produced it."
         domain_or_ip_target:
           $ref: '#/components/schemas/DomainOrIPTarget'
         is_valid:
