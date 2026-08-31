@@ -245,8 +245,9 @@ components:
 
     APIVersion:
       type: string
+      nullable: true
       example: '3.10.0'
-      description: "The version of this API specification implemented by the component that produced the containing object. Uses the same format as this document's info.version."
+      description: "The version of this API specification implemented by the component that produced the containing object. Uses the same format as this document's info.version. If a perspective is running a version of the API before 3.10, the version will be null for that perspective's response as before API version 3.10 individual perspectives did not need to report their version number."
 
     HTTPHeaders:
       type: object
