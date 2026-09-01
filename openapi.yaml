@@ -77,7 +77,6 @@ paths:
                     errors: null
                     timestamp_ns: 1725822089205545500
                     check_type: caa
-                    api_version: 3.10.0
                     details:
                       caa_record_present: false
                       found_at: null
@@ -88,7 +87,6 @@ paths:
                     errors: null
                     timestamp_ns: 1725822089670721500
                     check_type: caa
-                    api_version: 3.10.0
                     details:
                       caa_record_present: false
                       found_at: null
@@ -99,7 +97,6 @@ paths:
                     errors: null
                     timestamp_ns: 1725822089672918800
                     check_type: caa
-                    api_version: 3.10.0
                     details:
                       caa_record_present: false
                       found_at: null
@@ -110,7 +107,6 @@ paths:
                     errors: null
                     timestamp_ns: 1725822089693880600
                     check_type: caa
-                    api_version: 3.10.0
                     details:
                       caa_record_present: false
                       found_at: null
@@ -121,7 +117,6 @@ paths:
                     errors: null
                     timestamp_ns: 1725822089754537000
                     check_type: caa
-                    api_version: 3.10.0
                     details:
                       caa_record_present: false
                       found_at: null
@@ -132,7 +127,6 @@ paths:
                     errors: null
                     timestamp_ns: 1725822089912938200
                     check_type: caa
-                    api_version: 3.10.0
                     details:
                       caa_record_present: false
                       found_at: null
@@ -245,7 +239,6 @@ components:
 
     APIVersion:
       type: string
-      nullable: true
       example: '3.10.0'
       description: "The version of this API specification implemented by the component that produced the containing object. Uses the same format as this document's info.version. If a perspective is running a version of the API before 3.10, the version will be null for that perspective's response as before API version 3.10 individual perspectives did not need to report their version number."
 
@@ -551,12 +544,7 @@ components:
         - check_completed
         - check_passed
         - timestamp_ns
-        - api_version
       properties:
-        api_version:
-          allOf:
-            - $ref: '#/components/schemas/APIVersion'
-          description: "The version of this API specification implemented by the perspective that produced this check response. The coordinator and the perspectives are normally deployed together, but a partial deployment failure can leave them at different versions."
         check_passed:
           type: boolean
           example: True
