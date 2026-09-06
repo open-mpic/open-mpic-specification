@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 3.9.0
+  version: 3.10.0
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -41,6 +41,11 @@ paths:
                 certificate_type: tls-server
                 caa_domains:
                   - letsencrypt.org
+                expected_account_uris:
+                  - https://ca.example.com/acct/12345
+                expected_validation_methods:
+                  - http-01
+                  - ca-tbr-19
         required: true
       responses:
         '200':
@@ -63,6 +68,7 @@ paths:
                 is_valid: true
                 domain_or_ip_target: example.com
                 mpic_completed: true
+                api_version: 3.10.0
                 check_type: caa
                 perspectives:
                   - perspective_code: us-east-2
@@ -187,6 +193,24 @@ components:
           description: "Valid CAA domain names in issue or issuewild (e.g., CAA 0 issue \"letsencrypt.org\") tags that permit issuance by the calling CA. If left empty, the default configured CAA domain name(s) are used."
           items:
             type: string
+        expected_account_uris:
+          type: array
+          example:
+            - "https://ca.example.com/acct/12345"
+          description: "Permissible accounturi values that identify the subscriber requesting the certificate and would permit issuance if seen in the accounturi field of an RFC8657 CAA extension. If multiple values are provided, if any one of them is seen in the accounturi field of the CAA record, issuance is permitted."
+          items:
+            type: string
+            format: uri
+          nullable: true
+        expected_validation_methods:
+          type: array
+          example:
+            - "http-01"
+            - "ca-tbr-19"
+          description: "Permissible labels that identify the validation method used for this certificate request. These will be used in comparison with validationmethods parameters of RFC 8657 CAA extensions."
+          items:
+            $ref: '#/components/schemas/ValidationMethodRFC8657'
+          nullable: true
         allow_lookup_failure:
           type: boolean
           example: false
@@ -199,10 +223,21 @@ components:
       enum: ['acme-dns-01', 'acme-http-01', 'acme-tls-alpn-01', 'contact-phone-txt', 'contact-phone-caa', 'contact-email-txt', 'contact-email-caa',
              'dns-change', 'dns-persistent', 'ip-address', 'reverse-address-lookup', 'website-change'] # doc: https://swagger.io/docs/specification/data-models/enums/
 
+    ValidationMethodRFC8657:
+      description: "A validation method label as used in the validationmethods parameter of an RFC 8657 CAA extension. These labels are a different vocabulary from the ValidationMethod values used in DCV requests, e.g. the ACME DNS challenge is 'dns-01' here and 'acme-dns-01' there. The set of labels is open, so this is constrained only by the label syntax of RFC 8657."
+      type: string
+      pattern: '^[A-Za-z0-9-]+$'
+      example: "ca-tbr-19"
+
     TraceIdentifier:
       type: string
       example: 'ac2d0392-8699-4037-a0e0-0a6db1ff8b89'
       description: "A optional unique identifier for the request. This identifier is used to track the request through the system and can be used to correlate the request with other systems."
+
+    APIVersion:
+      type: string
+      example: '3.10.0'
+      description: "The version of this API specification implemented by the component that produced the containing object. Uses the same format as this document's info.version. If a perspective is running a version of the API before 3.10, the version will be null for that perspective's response as before API version 3.10 individual perspectives did not need to report their version number."
 
     HTTPHeaders:
       type: object
@@ -672,7 +707,12 @@ components:
         - domain_or_ip_target
         - is_valid
         - mpic_completed
+        - api_version
       properties:
+        api_version:
+          allOf:
+            - $ref: '#/components/schemas/APIVersion'
+          description: "The version of this API specification implemented by the coordinator that produced this response. Recorded in the body so that a retained result carries the version that produced it."
         domain_or_ip_target:
           $ref: '#/components/schemas/DomainOrIPTarget'
         is_valid:
