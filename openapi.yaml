@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 3.10.0
+  version: 3.10.1
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -365,6 +365,7 @@ components:
                 type: string
             expected_account_uri:
               type: string
+              format: uri
               example: "https://ca.example.com/acct/12345"
               description: "The expected account URI for the subscriber. The challenge will be completed successfully if the expected account URI is observed as the value for the accounturi parameter in the TXT record at the target challenge domain."
 
