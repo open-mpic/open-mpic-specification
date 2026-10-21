@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 3.10.2
+  version: 3.11.0
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -156,6 +156,7 @@ components:
       oneOf:
         - $ref: '#/components/schemas/AcmeHTTP01ValidationParameters'
         - $ref: '#/components/schemas/AcmeDNS01ValidationParameters'
+        - $ref: '#/components/schemas/DNSAccount01ValidationParameters'
         - $ref: '#/components/schemas/AcmeTLSALPN01ValidationParameters'
         - $ref: '#/components/schemas/WebsiteChangeValidationParameters'
         - $ref: '#/components/schemas/DNSChangeValidationParameters'
@@ -168,6 +169,7 @@ components:
         mapping:
           acme-http-01: '#/components/schemas/AcmeHTTP01ValidationParameters'
           acme-dns-01: '#/components/schemas/AcmeDNS01ValidationParameters'
+          dns-account-01: '#/components/schemas/DNSAccount01ValidationParameters'
           acme-tls-alpn-01: '#/components/schemas/AcmeTLSALPN01ValidationParameters'
           website-change: '#/components/schemas/WebsiteChangeValidationParameters'
           dns-change: '#/components/schemas/DNSChangeValidationParameters'
@@ -221,7 +223,7 @@ components:
       description: "The type of domain control validation the network perspectives should use."
       type: string
       enum: ['acme-dns-01', 'acme-http-01', 'acme-tls-alpn-01', 'contact-phone-txt', 'contact-phone-caa', 'contact-email-txt', 'contact-email-caa',
-             'dns-change', 'dns-persistent', 'ip-address', 'reverse-address-lookup', 'website-change'] # doc: https://swagger.io/docs/specification/data-models/enums/
+             'dns-account-01', 'dns-change', 'dns-persistent', 'ip-address', 'reverse-address-lookup', 'website-change'] # doc: https://swagger.io/docs/specification/data-models/enums/
 
     ValidationMethodRFC8657:
       description: "A validation method label as used in the validationmethods parameter of an RFC 8657 CAA extension. These labels are a different vocabulary from the ValidationMethod values used in DCV requests, e.g. the ACME DNS challenge is 'dns-01' here and 'acme-dns-01' there. The set of labels is open, so this is constrained only by the label syntax of RFC 8657."
@@ -379,6 +381,23 @@ components:
             key_authorization_hash:
               type: string
               description: "The base64url encoding of the SHA-256 digest [FIPS180-4] of the key authorization as defined in RFC 8555 Section 8.1. The challenge will be completed successfully if the expected-challenge is observed byte-for-byte identical in one of the RDATA fields found with the query for _acme-challenge.{domain_or_ip_target} IN TXT. To use this method, domain_or_ip_target MUST be a domain."
+
+    DNSAccount01ValidationParameters:
+      allOf:
+        - $ref: '#/components/schemas/BaseValidationParameters'
+        - type: object
+          required:
+            - acme_account_url
+            - key_authorization_hash
+          properties:
+            acme_account_url:
+              type: string
+              format: uri
+              example: "https://example.com/acme/acct/ExampleAccount"
+              description: "The ACME account URL (ACCOUNT_URL) that labels this challenge, per draft-ietf-acme-dns-account-label and CA/Browser Forum Baseline Requirements 3.2.2.4.21. The validation domain name is \"_\" || base32(SHA-256(acme_account_url)[0:10]) || \"._acme-challenge.\" || domain_or_ip_target, where base32 is the lowercase unpadded encoding of the first 10 bytes [RFC4648]. To use this method, domain_or_ip_target MUST be a domain."
+            key_authorization_hash:
+              type: string
+              description: "The base64url encoding (without padding) of the SHA-256 digest [FIPS180-4] of the key authorization as defined in RFC 8555 Section 8.1. The challenge will be completed successfully if this value is observed byte-for-byte identical in one of the RDATA fields found with the TXT query for the validation domain name."
 
     AcmeTLSALPN01ValidationParameters:
       allOf:
