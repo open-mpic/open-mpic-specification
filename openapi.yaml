@@ -8,7 +8,7 @@ info:
     email: open-mpic@princeton.edu
   license:
     name: MIT License
-  version: 3.10.2
+  version: 3.10.3
 
 externalDocs:
   description: Find out more about the project at open-mpic.org
@@ -710,7 +710,6 @@ components:
         - domain_or_ip_target
         - is_valid
         - mpic_completed
-        - api_version
       properties:
         api_version:
           allOf:
